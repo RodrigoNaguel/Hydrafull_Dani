@@ -19,6 +19,13 @@ class HydrationStore {
             Storage.setValue("day", today);
             Storage.setValue("waterMl", 0);
             Storage.setValue("caffeineTodayMg", 0);
+            Storage.setValue("hydrationReminder.lastReminderTime", 0);
+            Storage.setValue("hydrationReminder.lastReminderLevel", 0);
+            Storage.setValue("hydrationReminder.lastMessageIndex", -1);
+            Storage.setValue("hydrationReminder.lastMessageText", "");
+            Storage.setValue("hydrationReminder.remindersToday", 0);
+            Storage.setValue("hydrationReminder.quietUntil", 0);
+            Storage.setValue("hydrationReminder.goalCelebrationShown", false);
         }
         pruneCaffeineEvents();
     }
@@ -32,6 +39,9 @@ class HydrationStore {
     static function addWater(ml) {
         ensureToday();
         Storage.setValue("waterMl", getNumber("waterMl") + ml);
+        Storage.setValue("hydrationReminder.quietUntil",
+            Time.now().value() + AppConfig.REMINDER_AFTER_WATER_SEC);
+        Storage.setValue("hydrationReminder.lastReminderLevel", 0);
     }
 
     static function addCaffeine(mg as Number) {

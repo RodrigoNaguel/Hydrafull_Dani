@@ -44,7 +44,10 @@ class HydrationServiceDelegate extends System.ServiceDelegate {
 
         try {
             HydrationStore.saveWellnessSnapshot(calories, stress, bodyBattery);
-        } catch (error) {}
+            HydrationReminderEngine.evaluateAndNotify();
+        } catch (error) {
+            System.println("Background service error: " + error);
+        }
         Background.exit({ "reason" => reason, "updated" => true });
     }
 }

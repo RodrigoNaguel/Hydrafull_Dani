@@ -12,6 +12,14 @@ class AppConfig {
     static const DEFAULT_SWEAT_RATE_L_H = 0.7;
     static const DEFAULT_SWEAT_RATE_LOW_L_H = 0.4;
     static const DEFAULT_SWEAT_RATE_HIGH_L_H = 1.0;
+    static const REMINDER_WINDOW_START_HOUR = 8;
+    static const REMINDER_WINDOW_END_HOUR = 22;
+    static const REMINDER_WINDOW_END_MINUTE = 30;
+    static const REMINDER_MAX_DAILY_REMINDERS = 6;
+    static const REMINDER_AFTER_WATER_SEC = 75 * 60; // 60–90 minutes
+    static const REMINDER_COOLDOWN_LEVEL1_SEC = 100 * 60; // 90–120 minutes
+    static const REMINDER_COOLDOWN_LEVEL2_SEC = 75 * 60;  // 60–90 minutes
+    static const REMINDER_COOLDOWN_LEVEL3_SEC = 50 * 60;  // 45–60 minutes
     // Estimated sweat concentration is distinct from beverage concentration.
     static const DEFAULT_SWEAT_SODIUM_MG_PER_LITER = 920.0;
     static const DEFAULT_SWEAT_POTASSIUM_MG_PER_LITER = 156.0;
