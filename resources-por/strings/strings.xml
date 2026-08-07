@@ -9,6 +9,11 @@
     <string id="label_just_more">SO MAIS</string>
     <string id="label_congrats">parabens amor</string>
     <string id="label_hydrated">bem hidratada eu te amo!</string>
+    <string id="label_congrats_title">PARABÉNS!</string>
+    <string id="label_congrats_subtitle">VOCÊ BATEU A META</string>
+    <string id="label_congrats_hydration">HIDRATAÇÃO EM DIA</string>
+    <string id="label_congrats_nice">MANDOU BEM!</string>
+    <string id="unit_ml">ml</string>
     <string id="label_daniela_warn">Daniela!!</string>
     <string id="label_cactus_msg">voce nao e um cacto beba agua!!</string>
     <string id="label_love_remind">amor,</string>
@@ -36,4 +41,17 @@
     <string id="menu_suco_sub">+250ml hidratacao</string>
     <string id="menu_refrizero">Refri Zero</string>
     <string id="menu_refrizero_sub">~315ml hidratacao (90%)</string>
+
+    <string id="stats_title">Resumo do Dia</string>
+    <string id="stats_caffeine_title">Cafeína</string>
+    <string id="stats_unit_mg">mg</string>
+    <string id="stats_wellness_body">Corpo</string>
+    <string id="stats_wellness_stress">Estresse</string>
+    <string id="stats_wellness_calories">Cal</string>
+    <string id="stats_wellness_no_data">Sem dados de bem-estar</string>
+    <string id="feedback_water_low">Beba mais água, amor! Você consegue!</string>
+    <string id="feedback_water_mid">Quase lá! Continue se hidratando.</string>
+    <string id="feedback_water_high">Meta de água atingida! Parabéns!</string>
+    <string id="feedback_caffeine_high">Cuidado com o excesso de cafeína!</string>
+    <string id="feedback_caffeine_ok">Cafeína para dar um gás!</string>
 </resources>

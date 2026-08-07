@@ -9,8 +9,6 @@ class DashboardView extends WatchUi.View {
     private const WATER_COLOR = 0x00AEEB;
     private const WATER_DARK = 0x062A38;
     private const CAFFEINE_COLOR = 0xFF8A3D;
-    private const DANGER_COLOR = 0xFF4D5A;
-    private const CARD_COLOR = 0x171A1F;
     private const MUTED_COLOR = 0xA8B0B8;
 
     private var mCelebrationTimer as Timer.Timer?;
@@ -75,7 +73,6 @@ class DashboardView extends WatchUi.View {
         var centerX = width / 2;
         var centerY = height / 2;
         var waterMl = HydrationStore.getNumber("waterMl");
-        var caffeineMg = HydrationStore.getNumber("caffeineTodayMg");
         var weightKg = WellnessReader.weightKg();
         var totalCalories = HydrationStore.getNumber("lastCalories");
         var targetMl = HydrationCalculator.adjustedWaterMl(
@@ -85,6 +82,8 @@ class DashboardView extends WatchUi.View {
         var percent = (rawProgress * 100.0).toNumber();
         var missingMl = targetMl - waterMl;
         if (missingMl < 0) { missingMl = 0; }
+
+        var unitMl = WatchUi.loadResource(Rez.Strings.unit_ml);
 
         // Edge progress arc (subtle arc around screen border)
         drawEdgeArc(dc, centerX, centerY, diameter, progress);
@@ -98,14 +97,14 @@ class DashboardView extends WatchUi.View {
         // Show daily target (meta)
         dc.setColor(MUTED_COLOR, Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, scale(diameter, 140), Graphics.FONT_XTINY,
-            WatchUi.loadResource(Rez.Strings.label_goal) + " " + targetMl.format("%d") + " ml",
+            WatchUi.loadResource(Rez.Strings.label_goal) + " " + targetMl.format("%d") + " " + unitMl,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // Water amount - big centered number
-        var waterText = waterMl.format("%d") + " ml";
+        var waterText = waterMl.format("%d") + " " + unitMl;
         var valueFont = Graphics.FONT_LARGE;
         if (dc.getTextWidthInPixels(waterText, valueFont)
-                > scale(diameter, 600)) {
+                > scale(diameter, 500)) {
             valueFont = Graphics.FONT_MEDIUM;
         }
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -116,11 +115,11 @@ class DashboardView extends WatchUi.View {
         var progressText;
         if (waterMl >= targetMl) {
             progressText = percent.format("%d") + "% | +"
-                + (waterMl - targetMl).format("%d") + " ML";
+                + (waterMl - targetMl).format("%d") + " " + unitMl.toUpper();
         } else {
             progressText = percent.format("%d") + "% | " 
                 + WatchUi.loadResource(Rez.Strings.label_missing) + " "
-                + missingMl.format("%d") + " ML";
+                + missingMl.format("%d") + " " + unitMl.toUpper();
         }
         dc.setColor(MUTED_COLOR, Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, scale(diameter, 420), Graphics.FONT_XTINY,
@@ -138,7 +137,7 @@ class DashboardView extends WatchUi.View {
             resultDetail = WatchUi.loadResource(Rez.Strings.label_forget_water);
         } else if (rawProgress < 1.0) {
             resultTitle = WatchUi.loadResource(Rez.Strings.label_almost);
-            resultDetail = WatchUi.loadResource(Rez.Strings.label_just_more) + " " + missingMl.format("%d") + " ML";
+            resultDetail = WatchUi.loadResource(Rez.Strings.label_just_more) + " " + missingMl.format("%d") + " " + unitMl.toUpper();
         } else {
             resultTitle = WatchUi.loadResource(Rez.Strings.label_congrats);
             resultDetail = WatchUi.loadResource(Rez.Strings.label_hydrated);
@@ -158,31 +157,11 @@ class DashboardView extends WatchUi.View {
             drawCactusAnimation(dc, centerX, scale(diameter, 720), diameter);
         }
 
-        // Caffeine card (when not showing cactus)
-        if (rawProgress >= 0.25) {
-            var remaining = HydrationStore.caffeineRemaining(
-                AppConfig.DEFAULT_CAFFEINE_HALF_LIFE_HOURS).toNumber();
-            var caffeineWarning = HydrationCalculator.caffeineDailyWarningMg(weightKg);
-            var caffeineAccent = caffeineMg >= caffeineWarning
-                ? DANGER_COLOR : CAFFEINE_COLOR;
-            var cardX = scale(diameter, 120);
-            var cardY = scale(diameter, 650);
-            var cardWidth = scale(diameter, 760);
-            var cardHeight = scale(diameter, 95);
-            dc.setColor(CARD_COLOR, Graphics.COLOR_TRANSPARENT);
-            dc.fillRoundedRectangle(cardX, cardY, cardWidth, cardHeight,
-                cardHeight / 2);
-            dc.setColor(caffeineAccent, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(centerX,
-                cardY + cardHeight / 2, Graphics.FONT_XTINY,
-                caffeineMg.format("%d") + "mg | " + WatchUi.loadResource(Rez.Strings.label_active) 
-                    + remaining.format("%d") + "mg",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        }
+
 
         // Bottom hint
         dc.setColor(MUTED_COLOR, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(centerX, scale(diameter, 820), Graphics.FONT_XTINY,
+        dc.drawText(centerX, scale(diameter, 750), Graphics.FONT_XTINY,
             WatchUi.loadResource(Rez.Strings.label_tap_add),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
@@ -307,19 +286,19 @@ class DashboardView extends WatchUi.View {
 
         dc.setColor(0x18D58B, Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, scale(diameter, 590), Graphics.FONT_SMALL,
-            "PARABENS!",
+            WatchUi.loadResource(Rez.Strings.label_congrats_title),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, scale(diameter, 700), Graphics.FONT_XTINY,
-            "VOCE BATEU A META",
+            WatchUi.loadResource(Rez.Strings.label_congrats_subtitle),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(WATER_COLOR, Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, scale(diameter, 785), Graphics.FONT_XTINY,
-            "HIDRATACAO EM DIA",
+            WatchUi.loadResource(Rez.Strings.label_congrats_hydration),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(MUTED_COLOR, Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, scale(diameter, 885), Graphics.FONT_XTINY,
-            "MANDOU BEM!",
+            WatchUi.loadResource(Rez.Strings.label_congrats_nice),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -356,11 +335,11 @@ class DashboardDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onNextPage() {
-        return true;
+        return false;
     }
 
     function onPreviousPage() {
-        return true;
+        return false;
     }
 
     function onSelect() {

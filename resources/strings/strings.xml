@@ -9,6 +9,11 @@
     <string id="label_just_more">JUST MORE</string>
     <string id="label_congrats">congrats love</string>
     <string id="label_hydrated">well hydrated i love you!</string>
+    <string id="label_congrats_title">CONGRATS!</string>
+    <string id="label_congrats_subtitle">YOU HIT THE GOAL</string>
+    <string id="label_congrats_hydration">HYDRATION ON POINT</string>
+    <string id="label_congrats_nice">NICE GOING!</string>
+    <string id="unit_ml">ml</string>
     <string id="label_daniela_warn">Daniela!!</string>
     <string id="label_cactus_msg">you are not a cactus drink water!!</string>
     <string id="label_love_remind">love,</string>
@@ -36,4 +41,17 @@
     <string id="menu_suco_sub">+250ml hydration</string>
     <string id="menu_refrizero">Diet Soda</string>
     <string id="menu_refrizero_sub">~315ml hydration (90%)</string>
+
+    <string id="stats_title">Daily Summary</string>
+    <string id="stats_caffeine_title">Caffeine</string>
+    <string id="stats_unit_mg">mg</string>
+    <string id="stats_wellness_body">Body</string>
+    <string id="stats_wellness_stress">Stress</string>
+    <string id="stats_wellness_calories">Cal</string>
+    <string id="stats_wellness_no_data">No wellness data</string>
+    <string id="feedback_water_low">Drink more water, love! You can do it!</string>
+    <string id="feedback_water_mid">Almost there! Keep hydrating.</string>
+    <string id="feedback_water_high">Water goal reached! Congrats!</string>
+    <string id="feedback_caffeine_high">Be careful with too much caffeine!</string>
+    <string id="feedback_caffeine_ok">Caffeine to give you a boost!</string>
 </resources>
