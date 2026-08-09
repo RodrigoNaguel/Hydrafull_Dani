@@ -1,50 +1,67 @@
 <resources>
     <string id="AppName">HydraFuel</string>
-    <string id="title_hydration">HIDRATACAO</string>
+    <string id="title_hydration">HIDRATAÇÃO</string>
     <string id="label_goal">META:</string>
     <string id="label_missing">FALTAM</string>
     <string id="label_active">ATIVA ~</string>
     <string id="label_tap_add">TOQUE PARA ADICIONAR</string>
-    <string id="label_almost">QUASE LA!</string>
-    <string id="label_just_more">SO MAIS</string>
-    <string id="label_congrats">parabens amor</string>
+    <string id="label_add_drink">+ ADICIONAR BEBIDA</string>
+    <string id="label_almost">QUASE LÁ!</string>
+    <string id="label_just_more">SÓ MAIS</string>
+    <string id="label_congrats">parabéns amor</string>
     <string id="label_hydrated">bem hidratada eu te amo!</string>
     <string id="label_congrats_title">PARABÉNS!</string>
     <string id="label_congrats_subtitle">VOCÊ BATEU A META</string>
     <string id="label_congrats_hydration">HIDRATAÇÃO EM DIA</string>
     <string id="label_congrats_nice">MANDOU BEM!</string>
-    <string id="unit_ml">ml</string>
+    <string id="unit_ml" scope="glance">ml</string>
     <string id="label_daniela_warn">Daniela!!</string>
-    <string id="label_cactus_msg">voce nao e um cacto beba agua!!</string>
+    <string id="label_cactus_msg">você não é um cacto, beba água!</string>
     <string id="label_love_remind">amor,</string>
-    <string id="label_forget_water">vc esta esquecendo de beber agua</string>
+    <string id="label_forget_water">você está esquecendo de beber água</string>
     <string id="menu_title">Adicionar Bebida</string>
-    <string id="menu_water250">Agua 250ml</string>
+    <string id="menu_water250">Água 250ml</string>
     <string id="menu_water250_sub">copo</string>
-    <string id="menu_water500">Agua 500ml</string>
+    <string id="menu_water500">Água 500ml</string>
     <string id="menu_water500_sub">garrafa pequena</string>
-    <string id="menu_water1000">Agua 1 Litro</string>
+    <string id="menu_water1000">Água 1 litro</string>
     <string id="menu_water1000_sub">garrafa grande</string>
     <string id="menu_jungle">Jungle</string>
-    <string id="menu_jungle_sub">eletrolitos +500ml</string>
-    <string id="menu_espresso">Cafe Espresso</string>
-    <string id="menu_espresso_sub">50ml | +80mg cafeina</string>
-    <string id="menu_cafelongo">Cafe Longo</string>
-    <string id="menu_cafelongo_sub">110ml | +80mg cafeina</string>
+    <string id="menu_jungle_sub">eletrólitos +500ml</string>
+    <string id="menu_espresso">Café expresso</string>
+    <string id="menu_espresso_sub">50ml | +80mg cafeína</string>
+    <string id="menu_cafelongo">Café longo</string>
+    <string id="menu_cafelongo_sub">110ml | +80mg cafeína</string>
     <string id="menu_supercoffee">SuperCoffee</string>
-    <string id="menu_supercoffee_sub">200ml | +200mg cafeina</string>
+    <string id="menu_supercoffee_sub">200ml | +200mg cafeína</string>
     <string id="menu_matcha">Matcha</string>
-    <string id="menu_matcha_sub">250ml | +30mg cafeina</string>
+    <string id="menu_matcha_sub">250ml | +30mg cafeína</string>
     <string id="menu_matteleao">Matte Leao</string>
-    <string id="menu_matteleao_sub">250ml | +20mg cafeina</string>
+    <string id="menu_matteleao_sub">250ml | +20mg cafeína</string>
     <string id="menu_suco">Suco</string>
-    <string id="menu_suco_sub">+250ml hidratacao</string>
+    <string id="menu_suco_sub">+250ml hidratação</string>
     <string id="menu_refrizero">Refri Zero</string>
-    <string id="menu_refrizero_sub">~315ml hidratacao (90%)</string>
-
+    <string id="menu_refrizero_sub">~315ml hidratação (90%)</string>
+    <string id="menu_main_title">HydraFuel</string>
+    <string id="menu_quick_add">Adição Rápida</string>
+    <string id="menu_quick_add_sub">Adicione o valor preferido</string>
+    <string id="menu_add_water">Adicionar Água</string>
+    <string id="menu_add_water_sub">Escolha a quantidade</string>
+    <string id="menu_settings">Configurações</string>
+    <string id="menu_diagnostics">Diagnóstico</string>
+    <string id="menu_test_notification">Testar Notificação</string>
+    <string id="settings_title">Configurações</string>
+    <string id="settings_notifications">Notificações</string>
+    <string id="settings_reminders">Lembretes de hidratação</string>
+    <string id="settings_daily_goal">Meta diária</string>
+    <string id="notification_test_title" scope="background">HydraFuel</string>
+    <string id="notification_test_message" scope="background">Daniela, os lembretes de hidratação estão funcionando! 💧</string>
+    <string id="notification_subtitle" scope="background">Hidratação</string>
+    <string id="notification_action_open">Abrir</string>
     <string id="stats_title">Resumo do Dia</string>
-    <string id="stats_caffeine_title">Cafeína</string>
-    <string id="stats_unit_mg">mg</string>
+    <string id="stats_water_title">Água</string>
+    <string id="stats_caffeine_title" scope="glance">Cafeína</string>
+    <string id="stats_unit_mg" scope="glance">mg</string>
     <string id="stats_wellness_body">Corpo</string>
     <string id="stats_wellness_stress">Estresse</string>
     <string id="stats_wellness_calories">Cal</string>

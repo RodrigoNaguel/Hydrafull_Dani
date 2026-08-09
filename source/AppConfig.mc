@@ -1,3 +1,4 @@
+(:glance, :background)
 class AppConfig {
     static const WATER_STEP_ML = 250;
     static const CAFFEINE_STEP_MG = 80;
@@ -16,10 +17,17 @@ class AppConfig {
     static const REMINDER_WINDOW_END_HOUR = 22;
     static const REMINDER_WINDOW_END_MINUTE = 30;
     static const REMINDER_MAX_DAILY_REMINDERS = 6;
-    static const REMINDER_AFTER_WATER_SEC = 75 * 60; // 60–90 minutes
-    static const REMINDER_COOLDOWN_LEVEL1_SEC = 100 * 60; // 90–120 minutes
-    static const REMINDER_COOLDOWN_LEVEL2_SEC = 75 * 60;  // 60–90 minutes
-    static const REMINDER_COOLDOWN_LEVEL3_SEC = 50 * 60;  // 45–60 minutes
+    static const REMINDER_CHECK_INTERVAL_SEC = 15 * 60;
+    static const WELLNESS_SNAPSHOT_INTERVAL_SEC = 60 * 60;
+    static const REMINDER_MIN_WATER_FOR_QUIET_ML = 200;
+    static const REMINDER_AFTER_WATER_SEC = 45 * 60;
+    static const REMINDER_DEFICIT_LEVEL1_ML = 200;
+    static const REMINDER_DEFICIT_LEVEL2_ML = 450;
+    static const REMINDER_DEFICIT_LEVEL3_ML = 800;
+    static const REMINDER_ESCALATION_COOLDOWN_SEC = 45 * 60;
+    static const REMINDER_REPEAT_LEVEL1_SEC = 90 * 60;
+    static const REMINDER_REPEAT_LEVEL2_SEC = 75 * 60;
+    static const REMINDER_REPEAT_LEVEL3_SEC = 60 * 60;
     // Estimated sweat concentration is distinct from beverage concentration.
     static const DEFAULT_SWEAT_SODIUM_MG_PER_LITER = 920.0;
     static const DEFAULT_SWEAT_POTASSIUM_MG_PER_LITER = 156.0;

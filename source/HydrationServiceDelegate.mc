@@ -1,5 +1,6 @@
 import Toybox.ActivityMonitor;
 import Toybox.Background;
+import Toybox.Lang;
 import Toybox.SensorHistory;
 import Toybox.System;
 
@@ -17,14 +18,40 @@ class HydrationServiceDelegate extends System.ServiceDelegate {
         snapshotAndExit("activity");
     }
 
-    private function snapshotAndExit(reason) {
+    private function snapshotAndExit(reason as String) {
+        var exitReason = reason;
+        try {
+            HydrationStore.ensureToday();
+            var lastSnapshotAt = HydrationStore.getNumber("lastSnapshotAt");
+            var snapshotDue = reason.equals("activity")
+                || lastSnapshotAt <= 0
+                || (Toybox.Time.now().value() - lastSnapshotAt)
+                    >= AppConfig.WELLNESS_SNAPSHOT_INTERVAL_SEC;
+            if (snapshotDue) {
+                snapshotWellness();
+            }
+            var evaluation = HydrationReminderEngine.evaluateAndNotify();
+            exitReason = reason + "/" + evaluation;
+            HydrationStore.recordBackgroundRun(exitReason);
+        } catch (error) {
+            System.println("[HydraFuel] Background service error: " + error);
+            exitReason = reason + "/error";
+            try {
+                HydrationStore.recordBackgroundRun(exitReason);
+            } catch (storageError) {}
+        }
+        Background.exit(exitReason);
+    }
+
+    private function snapshotWellness() as Void {
         var calories = null;
         var stress = null;
         var bodyBattery = null;
 
         try {
             var info = ActivityMonitor.getInfo();
-            if (info.calories != null) { calories = info.calories; }
+            var dailyCalories = info.calories;
+            if (dailyCalories != null) { calories = dailyCalories; }
         } catch (error) {}
 
         try {
@@ -34,6 +61,9 @@ class HydrationServiceDelegate extends System.ServiceDelegate {
                 var stressSample = stressIterator.next();
                 if (stressSample != null) { stress = stressSample.data; }
             }
+        } catch (error) {}
+
+        try {
             if ((Toybox has :SensorHistory)
                     && (Toybox.SensorHistory has :getBodyBatteryHistory)) {
                 var iterator = SensorHistory.getBodyBatteryHistory({ :period => 1 });
@@ -42,12 +72,6 @@ class HydrationServiceDelegate extends System.ServiceDelegate {
             }
         } catch (error) {}
 
-        try {
-            HydrationStore.saveWellnessSnapshot(calories, stress, bodyBattery);
-            HydrationReminderEngine.evaluateAndNotify();
-        } catch (error) {
-            System.println("Background service error: " + error);
-        }
-        Background.exit({ "reason" => reason, "updated" => true });
+        HydrationStore.saveWellnessSnapshot(calories, stress, bodyBattery);
     }
 }

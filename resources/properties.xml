@@ -1,0 +1,19 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <properties>
+        <property id="notifications_enabled" type="boolean">true</property>
+        <property id="reminders_enabled" type="boolean">true</property>
+        <property id="quick_add_ml" type="number">250</property>
+    </properties>
+
+    <settings>
+        <setting propertyKey="@Properties.notifications_enabled" title="@Strings.settings_notifications">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.reminders_enabled" title="@Strings.settings_reminders">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.quick_add_ml" title="@Strings.menu_quick_add">
+            <settingConfig type="numeric"/>
+        </setting>
+    </settings>
+</resources>

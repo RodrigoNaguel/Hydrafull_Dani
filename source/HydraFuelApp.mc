@@ -13,57 +13,73 @@ class HydraFuelApp extends Application.AppBase {
 
     function onStart(state) {
         HydrationStore.ensureToday();
+        registerBackgroundEvents();
     }
 
+    (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function getInitialView() {
-        System.println("HydraFuel getInitialView");
-        registerBackgroundEvents();
+        var dashboardView = new $.DashboardView();
+        var statsView = new $.StatsView();
 
-        var dashboardView = new DashboardView();
-        var statsView = new StatsView();
-
-        var viewPager = new ViewPager();
+        var viewPager = new $.ViewPager();
         viewPager.setViews([dashboardView, statsView]);
         viewPager.setProhibitSwipe(false); // Allow swiping
 
-        var viewPagerIndicator = new PageIndicator();
+        var viewPagerIndicator = new $.PageIndicator();
         viewPagerIndicator.setDotCount(2);
         viewPagerIndicator.setDot(0, PAGE_INDICATOR_DOT_LIGHT);
         viewPagerIndicator.setDot(1, PAGE_INDICATOR_DOT_DARK);
         viewPager.setIndicator(viewPagerIndicator);
         
-        return [viewPager, new BaseDelegate(viewPager)];
+        return [viewPager, new $.BaseDelegate(viewPager)];
     }
 
+    (:typecheck(disableBackgroundCheck))
     function getGlanceView() {
-        System.println("HydraFuel getGlanceView");
         registerBackgroundEvents();
-        return [new HydrationGlanceView()];
+        return [new $.HydrationGlanceView()];
     }
 
+    (:typecheck(disableGlanceCheck))
     function getServiceDelegate() {
-        return [new HydrationServiceDelegate()];
+        return [new $.HydrationServiceDelegate()];
     }
 
+    (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function onBackgroundData(data) {
-        // Storage is shared; views reload it on their next redraw.
+        // Storage is shared; redraw the active foreground view with the
+        // snapshot produced by the background service.
+        WatchUi.requestUpdate();
     }
 
     private function registerBackgroundEvents() {
         if (!(Toybox has :Background) || !(System has :ServiceDelegate)) {
+            System.println("[HydraFuel] Background API unavailable");
             return;
         }
 
         try {
-            if (Background.getTemporalEventRegisteredTime() == null) {
-                Background.registerForTemporalEvent(new Time.Duration(30 * 60));
+            var registered = Background.getTemporalEventRegisteredTime();
+            var needsTemporalRegistration = registered == null;
+            if (registered instanceof Time.Duration) {
+                needsTemporalRegistration = registered.value()
+                    != AppConfig.REMINDER_CHECK_INTERVAL_SEC;
+            } else if (registered != null) {
+                // Replace a one-shot Moment with the configured periodic event.
+                needsTemporalRegistration = true;
+            }
+
+            if (needsTemporalRegistration) {
+                Background.registerForTemporalEvent(
+                    new Time.Duration(AppConfig.REMINDER_CHECK_INTERVAL_SEC));
             }
             if ((Background has :registerForActivityCompletedEvent)
-                    && !Background.getActivityCompletedEventRegistered()) {
+                    && ((!(Background has :getActivityCompletedEventRegistered))
+                        || !Background.getActivityCompletedEventRegistered())) {
                 Background.registerForActivityCompletedEvent();
             }
         } catch (error) {
-            System.println("Background unavailable");
+            System.println("[HydraFuel] Background registration failed: " + error);
         }
     }
 }
@@ -99,4 +115,5 @@ class BaseDelegate extends WatchUi.BehaviorDelegate {
         _viewPager.switchToPreviousPage();
         return true;
     }
+
 }

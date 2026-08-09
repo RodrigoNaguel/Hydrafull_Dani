@@ -1,12 +1,15 @@
+import Toybox.Lang;
 import Toybox.SensorHistory;
 import Toybox.UserProfile;
 
+(:glance, :background)
 class WellnessReader {
-    static function weightKg() {
+    static function weightKg() as Float {
         try {
             var profile = UserProfile.getProfile();
-            if (profile.weight != null && profile.weight > 0) {
-                return profile.weight.toFloat() / 1000.0;
+            var weight = profile.weight;
+            if (weight != null && weight > 0) {
+                return weight.toFloat() / 1000.0;
             }
         } catch (error) {}
         return AppConfig.DEFAULT_WEIGHT_KG;

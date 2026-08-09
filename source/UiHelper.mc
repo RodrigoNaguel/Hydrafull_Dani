@@ -1,91 +1,95 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
+import Toybox.System;
 
-// UiHelper contains modules for consistent UI rendering.
-// - Layout: Calculates screen metrics for responsive design.
-// - Text: Provides text wrapping and drawing utilities.
-// - Colors: Defines the app's color palette.
 (:glance)
 module UiHelper {
     module Colors {
-        const ACCENT = 0x00AEEB; // Main cyan/blue
-        const ACCENT_SUCCESS = 0x18D58B; // Green for positive states
-        const ACCENT_WARN = 0xFFD166; // Yellow for attention
-        const ACCENT_DANGER = 0xFF4D5A; // Red for alerts
+        const ACCENT = 0x00AEEB;
+        const ACCENT_SUCCESS = 0x18D58B;
+        const ACCENT_WARN = 0xFFD166;
+        const ACCENT_DANGER = 0xFF4D5A;
         const TEXT_PRIMARY = Graphics.COLOR_WHITE;
-        const TEXT_SECONDARY = 0xA8B0B8; // Light gray
+        const TEXT_SECONDARY = 0xA8B0B8;
         const TEXT_INVERSE = Graphics.COLOR_BLACK;
         const BACKGROUND = Graphics.COLOR_BLACK;
-        const BACKGROUND_CARD = 0x171A1F; // Dark gray for cards
+        const BACKGROUND_CARD = 0x171A1F;
     }
 
-    // The Layout class calculates dimensions and positions based on screen
-    // geometry. It adapts to circular and rectangular screens.
+    module Spacing {
+        const SMALL = 4;
+        const MEDIUM = 8;
+        const LARGE = 12;
+        const XLARGE = 16;
+    }
+
     class Layout {
         public var width as Number;
         public var height as Number;
         public var centerX as Number;
         public var centerY as Number;
         public var isCircular as Boolean;
+        public var margin as Number;
 
-        // The safe drawable area, considering screen shape.
         private var _safeRadius as Float;
-        private var _safeTop as Float;
-        private var _safeBottom as Float;
-        private var _safeLeft as Float;
-        private var _safeRight as Float;
 
         function initialize(dc as Dc) {
             width = dc.getWidth();
             height = dc.getHeight();
             centerX = width / 2;
             centerY = height / 2;
-            
-            var deviceSettings = System.getDeviceSettings();
-            isCircular = (deviceSettings.screenShape == System.SCREEN_SHAPE_ROUND);
+            margin = Spacing.MEDIUM;
 
+            var deviceSettings = System.getDeviceSettings();
+            // A GlanceView receives a rectangular, bounded Dc even on round
+            // watches. Only apply circular-screen geometry to a full display.
+            isCircular = (deviceSettings.screenShape == System.SCREEN_SHAPE_ROUND)
+                && (width == height);
+
+            var diameter = width < height ? width : height;
             if (isCircular) {
-                // For circular screens, the safe radius is a percentage of the
-                // smallest dimension, creating a margin.
-                var diameter = width < height ? width : height;
-                _safeRadius = diameter * 0.46; // ~92% of diameter
-                _safeTop = centerY - _safeRadius;
-                _safeBottom = centerY + _safeRadius;
-                _safeLeft = centerX - _safeRadius;
-                _safeRight = centerX + _safeRadius;
+                _safeRadius = diameter / 2.0;
             } else {
-                // For rectangular screens, use a fixed margin.
-                var margin = width * 0.05;
-                _safeRadius = (width / 2) - margin;
-                _safeTop = margin;
-                _safeBottom = height - margin;
-                _safeLeft = margin;
-                _safeRight = width - margin;
+                _safeRadius = width / 2.0;
             }
         }
 
-        // Returns the Y coordinate for a percentage of the screen height.
-        // 0.0 is top, 1.0 is bottom.
-        function vPos(percentage as Float) as Float {
-            return height * percentage;
+        function safeWidthAtY(y as Number) as Number {
+            if (!isCircular) {
+                return width - 2 * margin;
+            }
+            var dy = (y - centerY).abs();
+            if (dy >= _safeRadius) {
+                return 0;
+            }
+            var chordWidth = 2 * Math.sqrt(_safeRadius * _safeRadius - dy * dy);
+            var safeWidth = chordWidth.toNumber() - 2 * margin;
+            return safeWidth > 0 ? safeWidth : 0;
+        }
+
+        function safeLeft(y as Number) as Number {
+            return centerX - (safeWidthAtY(y) / 2);
         }
  
-        // Returns the width of the safe drawable area at a given Y coordinate.
-        // On circular screens, this is narrower near the top and bottom.
-        function safeWidthAtY(y as Number) as Float {
-            if (!isCircular || (y >= _safeTop && y <= _safeBottom)) {
-                 if (!isCircular) {
-                    return _safeRight - _safeLeft;
-                 }
-                 var dy = (y - centerY).abs();
-                 // Using circular segment formula: 2 * sqrt(r^2 - d^2)
-                 var chordWidth = 2 * Math.sqrt(_safeRadius * _safeRadius - dy * dy);
-                 return chordWidth;
-            }
-            return 0.0;
+        function safeRight(y as Number) as Number {
+            return centerX + (safeWidthAtY(y) / 2);
         }
 
-        // Gets a font based on a semantic size.
+        function safeTop() as Number {
+            if (!isCircular) {
+                return margin;
+            }
+            return (centerY - _safeRadius * Math.sin(Math.PI / 4.0)).toNumber();
+        }
+
+        function safeBottom() as Number {
+            if (!isCircular) {
+                return height - margin;
+            }
+            return (centerY + _safeRadius * Math.sin(Math.PI / 4.0)).toNumber();
+        }
+
         function getFont(size as Symbol) as FontDefinition {
             var fonts = {
                 :title => Graphics.FONT_TINY,
@@ -94,7 +98,7 @@ module UiHelper {
                 :value_medium => Graphics.FONT_NUMBER_MEDIUM,
                 :body => Graphics.FONT_SMALL,
                 :small => Graphics.FONT_XTINY
-            };
+            } as Dictionary<Symbol, FontDefinition>;
 
             var font = fonts[size];
             if (font != null) {
@@ -104,23 +108,31 @@ module UiHelper {
         }
     }
 
-    // The Text module provides advanced text drawing functions, like
-    // automatic line wrapping.
-    module Text {
+    class Flow {
+        private var _y as Number;
+        public var layout as Layout;
 
-        // Draws multi-line text, wrapped to fit within a specified width.
-        // Returns the Y position of the bottom of the last line drawn.
-        function drawWrapped(
-            dc as Dc,
-            text as String,
-            font as FontDefinition,
-            color as ColorType,
-            x as Number,
-            y as Number,
-            maxWidth as Number,
-            justification as TextJustification,
-            maxLines as Number or Null
-        ) as Number {
+        function initialize(layout as Layout, startY as Number) {
+            self.layout = layout;
+            _y = startY;
+        }
+
+        function y() as Number {
+            return _y;
+        }
+
+        function advance(pixels as Number) as Number {
+            _y += pixels;
+            return _y;
+        }
+
+        function remainingHeight(bottomBound as Number) as Number {
+            return bottomBound - _y;
+        }
+    }
+
+    module Text {
+        function drawWrapped(dc, text, font, color, x, y, maxWidth, justification, maxLines, addEllipsis) {
             var lines = wrapText(dc, text, font, maxWidth);
             var lineHeight = dc.getFontHeight(font);
             var currentY = y;
@@ -130,46 +142,63 @@ module UiHelper {
             var linesToDraw = lines.size();
             if (maxLines != null && linesToDraw > maxLines) {
                 linesToDraw = maxLines;
-                // Add ellipsis to the last drawn line
-                var lastLine = lines[linesToDraw - 1];
-                if (lastLine.length() > 3) {
-                   var truncatedLine = lastLine.substring(0, lastLine.length() - 2) + "...";
-                   while(dc.getTextWidthInPixels(truncatedLine, font) > maxWidth && truncatedLine.length() > 3) {
-                       truncatedLine = truncatedLine.substring(0, truncatedLine.length() - 4) + "...";
-                   }
-                   lines[linesToDraw-1] = truncatedLine;
+                if (addEllipsis) {
+                    var lastLine = (lines as Array<String>)[linesToDraw - 1] as String;
+                    if (lastLine.length() > 3) {
+                       var truncatedLine = lastLine.substring(0, lastLine.length() - 2) + "...";
+                       while(dc.getTextWidthInPixels(truncatedLine, font) > maxWidth && truncatedLine.length() > 3) {
+                           truncatedLine = truncatedLine.substring(0, truncatedLine.length() - 4) + "...";
+                       }
+                       (lines as Array<String>)[linesToDraw-1] = truncatedLine;
+                    }
                 }
             }
 
-            for (var i = 0; i < linesToDraw; i++) {
-                dc.drawText(x, currentY, font, lines[i], justification);
-                currentY += lineHeight;
+            var drawJustification = justification & ~Graphics.TEXT_JUSTIFY_VCENTER;
+            if ((justification & Graphics.TEXT_JUSTIFY_VCENTER) != 0) {
+                currentY -= lineHeight * linesToDraw / 2;
             }
 
+            for (var i = 0; i < linesToDraw; i++) {
+                var line = (lines as Array<String>)[i] as String;
+                dc.drawText(x, currentY, font, line, drawJustification);
+                currentY += lineHeight;
+            }
             return currentY;
         }
 
-        // Splits a string into an array of lines that fit a max width.
-        function wrapText(
-            dc as Dc,
-            text as String,
-            font as FontDefinition,
-            maxWidth as Number
-        ) as Array<String> {
+        function drawFittedText(dc, text, y, preferredFont, fallbackFont, justification) {
+            var layout = new UiHelper.Layout(dc);
+            var maxWidth = layout.safeWidthAtY(y);
+
+            var font = preferredFont;
+            if (dc.getTextWidthInPixels(text, font) > maxWidth) {
+                font = fallbackFont;
+            }
+
+            dc.drawText(layout.centerX, y, font, text, justification);
+            return dc.getFontHeight(font);
+        }
+
+        function wrapText(dc, text, font, maxWidth) {
             var lines = [] as Array<String>;
+            if (maxWidth <= 0) {
+                return lines;
+            }
             var words = splitString(text, " ");
             if (words.size() == 0) {
                 return lines;
             }
 
-            var currentLine = words[0];
+            var currentLine = (words as Array<String>)[0] as String;
             for (var i = 1; i < words.size(); i++) {
-                var testLine = currentLine + " " + words[i];
+                var word = (words as Array<String>)[i] as String;
+                var testLine = currentLine + " " + word;
                 if (dc.getTextWidthInPixels(testLine, font) <= maxWidth) {
                     currentLine = testLine;
                 } else {
                     lines.add(currentLine);
-                    currentLine = words[i];
+                    currentLine = word;
                 }
             }
             lines.add(currentLine);
@@ -177,8 +206,7 @@ module UiHelper {
             return lines;
         }
 
-        // Helper to split a string by a delimiter.
-        function splitString(text as String, delimiter as String) as Array<String> {
+        function splitString(text, delimiter) {
             var result = [] as Array<String>;
             var temp = "";
             for (var i = 0; i < text.length(); i++) {
@@ -196,6 +224,33 @@ module UiHelper {
                 result.add(temp);
             }
             return result;
+        }
+    }
+
+    class ProgressBar {
+        static function draw(dc, x, y, width, height, progress, fillColor) {
+            var radius = height / 2;
+            var trackColor = 0x1C2330;
+            dc.setColor(trackColor, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(x, y, width, height, radius);
+
+            var clampedProgress = progress;
+            if (clampedProgress < 0.0) { clampedProgress = 0.0; }
+            if (clampedProgress > 1.0) { clampedProgress = 1.0; }
+
+            var fillWidth = (clampedProgress * width).toNumber();
+            if (fillWidth > 0) {
+                var fillRadius = fillWidth < height ? fillWidth / 2 : radius;
+                dc.setColor(fillColor, Graphics.COLOR_TRANSPARENT);
+                dc.fillRoundedRectangle(x, y, fillWidth, height, fillRadius);
+            }
+        }
+
+        static function colorForProgress(progress) {
+            if (progress < 0.25) { return 0x35B5E1; }
+            if (progress < 0.60) { return 0x00AEEB; }
+            if (progress < 0.90) { return 0x1FA1F2; }
+            return 0x18D58B;
         }
     }
 }

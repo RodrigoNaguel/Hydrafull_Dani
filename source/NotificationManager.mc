@@ -1,47 +1,89 @@
-import Toybox.Attention;
 import Toybox.Lang;
 import Toybox.Notifications;
 import Toybox.System;
 
+(:background)
 class NotificationManager {
-    static function notificationsSupported() {
+    static function notificationsSupported() as Boolean {
         return (Toybox has :Notifications);
     }
 
-    static function notifyReminder(message) {
-        if (!(Toybox has :Notifications)) { return; }
-        try {
-            Notifications.showNotification(message,
-                "Toca para abrir HydraFuel",
-                null);
-            NotificationManager.requestAttention();
-        } catch (error) {
-            System.println("Notification error: " + error);
+    static function notifyReminder(message as String) as Boolean {
+        if (!SettingsManager.notificationsEnabled()) {
+            return false;
         }
+        if (!(Toybox has :Notifications)) {
+            return false;
+        }
+
+        return NotificationManager.showNotification(
+            "HydraFuel",
+            message,
+            "reminder",
+            HydrationStore.getNumber("hydrationReminder.remindersToday") == 0
+        );
     }
 
-    static function notifyCelebration(message) {
-        if (!(Toybox has :Notifications)) { return; }
-        try {
-            Notifications.showNotification(message,
-                "Meta do dia atingida!",
-                null);
-            NotificationManager.requestAttention();
-        } catch (error) {
-            System.println("Notification error: " + error);
+    static function notifyCelebration(message as String) as Boolean {
+        if (!SettingsManager.notificationsEnabled()) {
+            return false;
         }
+        if (!(Toybox has :Notifications)) {
+            return false;
+        }
+
+        return NotificationManager.showNotification(
+            "HydraFuel",
+            message,
+            "celebration",
+            false
+        );
     }
 
-    private static function requestAttention() {
-        if (!(Toybox has :Attention)) { return; }
-        try {
-            if (Attention has :vibrate) {
-                Attention.vibrate([
-                    new Attention.VibeProfile(25, 400)
-                ]);
-            }
-        } catch (error) {
-            System.println("Attention error: " + error);
+    static function notifyTest() as Boolean {
+        if (!SettingsManager.notificationsEnabled()) {
+            return false;
         }
+        if (!(Toybox has :Notifications)) {
+            return false;
+        }
+
+        return NotificationManager.showNotification(
+            Rez.Strings.notification_test_title,
+            Rez.Strings.notification_test_message,
+            "test",
+            false
+        );
+    }
+
+    private static function showNotification(
+            title as String or ResourceId,
+            message as String or ResourceId,
+            reason as String,
+            dismissPrevious as Boolean) as Boolean {
+        try {
+            Notifications.showNotification(
+                title,
+                Rez.Strings.notification_subtitle,
+                {
+                    // These devices hide the subtitle in notification
+                    // previews, so the rotating message belongs in the body.
+                    :body => message,
+                    :dismissPrevious => dismissPrevious
+                }
+            );
+        } catch (error) {
+            System.println("[HydraFuel] Notification error: " + error);
+            return false;
+        }
+
+        // Notification delivery succeeded. Diagnostics are best effort and
+        // must not turn that success into a retry that sends a duplicate.
+        try {
+            HydrationStore.recordNotification(reason);
+        } catch (error) {
+            System.println("[HydraFuel] Notification telemetry error: " + error);
+        }
+        return true;
     }
 }

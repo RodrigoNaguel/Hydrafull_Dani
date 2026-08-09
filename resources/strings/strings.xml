@@ -4,7 +4,8 @@
     <string id="label_goal">GOAL:</string>
     <string id="label_missing">MISSING</string>
     <string id="label_active">ACTIVE ~</string>
-    <string id="label_tap_add">TAP TO ADD</string>
+    <string id="label_tap_add">+ ADD WATER</string>
+    <string id="label_add_drink">+ ADD DRINK</string>
     <string id="label_almost">ALMOST THERE!</string>
     <string id="label_just_more">JUST MORE</string>
     <string id="label_congrats">congrats love</string>
@@ -13,7 +14,7 @@
     <string id="label_congrats_subtitle">YOU HIT THE GOAL</string>
     <string id="label_congrats_hydration">HYDRATION ON POINT</string>
     <string id="label_congrats_nice">NICE GOING!</string>
-    <string id="unit_ml">ml</string>
+    <string id="unit_ml" scope="glance">ml</string>
     <string id="label_daniela_warn">Daniela!!</string>
     <string id="label_cactus_msg">you are not a cactus drink water!!</string>
     <string id="label_love_remind">love,</string>
@@ -41,10 +42,26 @@
     <string id="menu_suco_sub">+250ml hydration</string>
     <string id="menu_refrizero">Diet Soda</string>
     <string id="menu_refrizero_sub">~315ml hydration (90%)</string>
-
+    <string id="menu_main_title">HydraFuel</string>
+    <string id="menu_quick_add">Quick Add</string>
+    <string id="menu_quick_add_sub">Add the preferred amount</string>
+    <string id="menu_add_water">Add Water</string>
+    <string id="menu_add_water_sub">Choose a drink amount</string>
+    <string id="menu_settings">Settings</string>
+    <string id="menu_diagnostics">Diagnostics</string>
+    <string id="menu_test_notification">Test Notification</string>
+    <string id="settings_title">Settings</string>
+    <string id="settings_notifications">Notifications</string>
+    <string id="settings_reminders">Hydration reminders</string>
+    <string id="settings_daily_goal">Daily goal</string>
+    <string id="notification_test_title" scope="background">HydraFuel</string>
+    <string id="notification_test_message" scope="background">Daniela, hydration reminders are working! 💧</string>
+    <string id="notification_subtitle" scope="background">Hydration</string>
+    <string id="notification_action_open">Open</string>
     <string id="stats_title">Daily Summary</string>
-    <string id="stats_caffeine_title">Caffeine</string>
-    <string id="stats_unit_mg">mg</string>
+    <string id="stats_water_title">Water</string>
+    <string id="stats_caffeine_title" scope="glance">Caffeine</string>
+    <string id="stats_unit_mg" scope="glance">mg</string>
     <string id="stats_wellness_body">Body</string>
     <string id="stats_wellness_stress">Stress</string>
     <string id="stats_wellness_calories">Cal</string>

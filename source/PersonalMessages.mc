@@ -1,29 +1,34 @@
+(:background)
 class PersonalMessages {
     static function reminderMessages(level) {
         if (level == 1) {
             return [
                 "Amor, um golinho de água 💧",
-                "Dani, bora dar uma hidratada?",
+                "Amor, bora dar uma hidratada?",
                 "Água, amorzinho 💙",
-                "Amor, antes do próximo café: água 😂"
+                "Amor, antes do próximo café: água 😂",
+                "Amor, pausa de um minutinho pra água? 💧",
+                "Garrafinha na mão, amor 😄💧"
             ];
         }
         if (level == 2) {
             return [
                 "Amor, estou vendo que você não está tomando água 👀",
                 "Você não é um cacto 🌵😂 Bebe água.",
-                "Dani… cadê essa garrafinha? 😂",
+                "Linda… cadê essa garrafinha? 😂",
                 "Ei atleta, água também faz parte do treino.",
-                "Dani, seu Garmin está mandando você beber água. Eu só concordo 😂"
+                "Dani, seu Garmin está mandando você beber água. Eu só concordo 😂",
+                "Dani, hidratação atrasada: bora recuperar 💧"
             ];
         }
         if (level == 3) {
             return [
                 "AMORRR 😂💧 vai beber água!",
-                "Dani! Seu Garmin está preocupado com essa garrafinha parada 😂",
+                "Daniela! Seu Garmin está preocupado com essa garrafinha parada 😂",
                 "Estou oficialmente ativando o modo namorado chato: BEBE ÁGUA 😂❤️",
                 "Você não virou um cacto desde a última notificação 🌵😂",
-                "Seu namorado programou isso justamente porque sabia que você ia esquecer 😂💧"
+                "Seu namorado programou isso justamente porque sabia que você ia esquecer 😂💧",
+                "Alerta do namorado e do Garmin: água agora 😂💧"
             ];
         }
         return ["Amor, um golinho de água 💧"];

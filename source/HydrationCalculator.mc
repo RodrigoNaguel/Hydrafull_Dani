@@ -1,3 +1,4 @@
+(:glance, :background)
 class HydrationCalculator {
     static function baselineWaterMl(weightKg) {
         var estimate = weightKg * AppConfig.BASE_WATER_ML_PER_KG;

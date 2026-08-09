@@ -184,6 +184,32 @@ Para testar no relógio físico, use `Monkey C: Build for Device` e gere um
 `.prg` separado para o modelo exato. Para a loja, use
 `Monkey C: Export Project` e envie o arquivo `.iq`.
 
+### Testar lembretes no relógio
+
+Depois de instalar uma nova versão, abra o HydraFuel uma vez. Isso registra ou
+migra o serviço periódico para 15 minutos. O item **Testar Notificação** valida
+apenas a permissão e a exibição; os lembretes automáticos também dependem da
+janela de 08:00–22:30, do déficit e dos cooldowns.
+
+O item **Diagnóstico** mostra:
+
+- `N`, `R` e `API`: notificações, lembretes e suporte do relógio;
+- `BG | 15m`: serviço registrado e intervalo solicitado;
+- `Run`: última execução e por que o motor enviou ou aguardou;
+- `Notif`: última notificação aceita pela API;
+- `Today`, `Level` e `Quiet`: limite diário, severidade e pausa após água.
+
+Política atual: checagem leve a cada 15 minutos, snapshot de sensores a cada
+hora, pausa de 45 minutos apenas para registros de pelo menos 200 ml, faixas de
+déficit em 200/450/800 ml e no máximo seis lembretes por dia. A execução real
+continua sujeita ao agendamento do sistema do relógio.
+
+As frases possuem um cursor persistente separado por nível. O app percorre
+todas as mensagens daquela faixa antes de reutilizar uma e continua a rotação
+mesmo depois de fechar o app ou virar o dia. A mensagem variável é enviada
+também no corpo da notificação, porque alguns modelos ocultam o subtítulo na
+prévia e no histórico.
+
 ### Pop!_OS 24.04
 
 O simulador do SDK 9.2.0 ainda depende dos nomes WebKitGTK 4.0 e de libsoup2,

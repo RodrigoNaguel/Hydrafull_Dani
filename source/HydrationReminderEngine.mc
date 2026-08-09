@@ -1,26 +1,29 @@
 import Toybox.Application.Storage;
 import Toybox.Lang;
-import Toybox.Math;
-import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 
+(:background)
 class HydrationReminderEngine {
-    static function evaluateAndNotify() {
+    static function evaluateAndNotify() as String {
         HydrationStore.ensureToday();
 
+        if (!SettingsManager.notificationsEnabled()) {
+            return "notifications-off";
+        }
+
+        if (!SettingsManager.remindersEnabled()) {
+            return "reminders-off";
+        }
+
         if (!NotificationManager.notificationsSupported()) {
-            return;
+            return "api-off";
         }
 
         var now = Time.now();
         var nowValue = now.value();
         if (!HydrationReminderEngine.isWithinNotificationWindow(now)) {
-            return;
-        }
-
-        if (HydrationReminderEngine.isQuietPeriodActive(nowValue)) {
-            return;
+            return "outside-window";
         }
 
         var weightKg = WellnessReader.weightKg();
@@ -29,51 +32,78 @@ class HydrationReminderEngine {
         var waterMl = HydrationStore.getNumber("waterMl");
 
         if (targetMl <= 0) {
-            return;
+            return "invalid-target";
         }
 
         if (waterMl >= targetMl) {
-            HydrationReminderEngine.showGoalCelebrationIfNeeded(nowValue);
-            return;
+            return HydrationReminderEngine.showGoalCelebrationIfNeeded(
+                nowValue);
+        }
+
+        if (HydrationReminderEngine.isQuietPeriodActive(nowValue)) {
+            return "quiet";
         }
 
         var expectedMl = HydrationReminderEngine.expectedProgressMl(now, targetMl);
         if (expectedMl <= 0) {
-            return;
+            return "before-start";
         }
 
         var deficitMl = expectedMl - waterMl;
         if (deficitMl <= 0) {
-            return;
+            return "on-track";
         }
 
-        var currentLevel = HydrationReminderEngine.reminderLevel(deficitMl);
+        var currentLevel = HydrationReminderEngine.reminderLevelForDeficit(deficitMl);
         if (currentLevel == 0) {
-            return;
+            return "on-track";
         }
 
         if (!HydrationReminderEngine.canShowReminder(nowValue, currentLevel)) {
-            return;
+            return "cooldown-L" + currentLevel;
         }
 
-        if (HydrationReminderEngine.remindersToday() >= AppConfig.REMINDER_MAX_DAILY_REMINDERS) {
-            return;
+        var lastReminderLevel = HydrationReminderEngine.getNumberValue(
+            "hydrationReminder.lastReminderLevel");
+        if (currentLevel == lastReminderLevel
+                && HydrationReminderEngine.shouldReserveNextLevel(
+                    deficitMl, currentLevel, targetMl,
+                    HydrationReminderEngine.minutesOfDay(now))) {
+            // Avoid a lower-level repeat immediately before the next level;
+            // otherwise that repeat would postpone the more relevant alert.
+            return "await-L" + (currentLevel + 1);
+        }
+
+        if (HydrationReminderEngine.remindersToday()
+                >= AppConfig.REMINDER_MAX_DAILY_REMINDERS) {
+            return "daily-limit";
         }
 
         var message = HydrationReminderEngine.selectMessage(currentLevel);
-        NotificationManager.notifyReminder(message);
-        HydrationReminderEngine.recordReminder(nowValue, currentLevel);
+        if (NotificationManager.notifyReminder(message)) {
+            HydrationReminderEngine.recordReminder(nowValue, currentLevel);
+            HydrationReminderEngine.recordReminderMessageSelection(
+                message, currentLevel);
+            return "sent-L" + currentLevel;
+        }
+        return "send-error";
     }
 
-    private static function showGoalCelebrationIfNeeded(nowValue) {
+    private static function showGoalCelebrationIfNeeded(nowValue) as String {
         if (HydrationReminderEngine.hasGoalCelebrationShown()) {
-            return;
+            return "goal-reached";
         }
         var message = HydrationReminderEngine.selectCelebrationMessage();
-        NotificationManager.notifyCelebration(message);
-        Storage.setValue("hydrationReminder.goalCelebrationShown", true);
-        Storage.setValue("hydrationReminder.lastReminderTime", nowValue);
-        Storage.setValue("hydrationReminder.lastReminderLevel", 0);
+        if (NotificationManager.notifyCelebration(message)) {
+            // Mark the goal first so an interrupted secondary write cannot
+            // cause the same celebration to be delivered again.
+            Storage.setValue("hydrationReminder.goalCelebrationShown", true);
+            Storage.setValue("hydrationReminder.lastReminderTime", nowValue);
+            Storage.setValue("hydrationReminder.lastReminderLevel", 0);
+            HydrationReminderEngine.recordCelebrationMessageSelection(message);
+            return "goal-sent";
+        }
+        return "goal-error";
     }
 
     private static function isWithinNotificationWindow(now) {
@@ -85,8 +115,11 @@ class HydrationReminderEngine {
     }
 
     private static function expectedProgressMl(now, targetMl) {
-        var local = Gregorian.info(now, Time.FORMAT_SHORT);
-        var currentMinutes = local.hour * 60 + local.min;
+        return HydrationReminderEngine.expectedProgressMlForMinutes(
+            HydrationReminderEngine.minutesOfDay(now), targetMl);
+    }
+
+    static function expectedProgressMlForMinutes(currentMinutes, targetMl) {
         var start = AppConfig.REMINDER_WINDOW_START_HOUR * 60;
         var end = AppConfig.REMINDER_WINDOW_END_HOUR * 60 + AppConfig.REMINDER_WINDOW_END_MINUTE;
         if (currentMinutes <= start) {
@@ -100,17 +133,53 @@ class HydrationReminderEngine {
         return targetMl * (elapsed.toFloat() / total.toFloat());
     }
 
-    private static function reminderLevel(deficitMl) {
-        if (deficitMl < 200) {
+    static function reminderLevelForDeficit(deficitMl) as Number {
+        if (deficitMl < AppConfig.REMINDER_DEFICIT_LEVEL1_ML) {
             return 0;
         }
-        if (deficitMl < 500) {
+        if (deficitMl < AppConfig.REMINDER_DEFICIT_LEVEL2_ML) {
             return 1;
         }
-        if (deficitMl < 900) {
+        if (deficitMl < AppConfig.REMINDER_DEFICIT_LEVEL3_ML) {
             return 2;
         }
         return 3;
+    }
+
+    static function shouldReserveNextLevel(
+            deficitMl, currentLevel as Number, targetMl,
+            currentMinutes as Number) as Boolean {
+        if (currentLevel < 1 || currentLevel >= 3 || targetMl <= 0) {
+            return false;
+        }
+
+        var endMinutes = AppConfig.REMINDER_WINDOW_END_HOUR * 60
+            + AppConfig.REMINDER_WINDOW_END_MINUTE;
+        var intervalMinutes = AppConfig.REMINDER_CHECK_INTERVAL_SEC / 60;
+        if ((currentMinutes + intervalMinutes) > endMinutes) {
+            return false;
+        }
+
+        var nextThreshold = currentLevel == 1
+            ? AppConfig.REMINDER_DEFICIT_LEVEL2_ML
+            : AppConfig.REMINDER_DEFICIT_LEVEL3_ML;
+        var remainingMl = nextThreshold - deficitMl;
+        if (remainingMl <= 0) {
+            return false;
+        }
+
+        var windowMinutes = (AppConfig.REMINDER_WINDOW_END_HOUR * 60
+            + AppConfig.REMINDER_WINDOW_END_MINUTE)
+            - (AppConfig.REMINDER_WINDOW_START_HOUR * 60);
+        var expectedPerCheckMl = targetMl.toFloat()
+            * AppConfig.REMINDER_CHECK_INTERVAL_SEC.toFloat()
+            / (windowMinutes * 60).toFloat();
+        return remainingMl <= expectedPerCheckMl;
+    }
+
+    private static function minutesOfDay(now) as Number {
+        var local = Gregorian.info(now, Time.FORMAT_SHORT);
+        return local.hour * 60 + local.min;
     }
 
     private static function canShowReminder(nowValue, currentLevel) {
@@ -120,7 +189,10 @@ class HydrationReminderEngine {
         }
 
         var lastReminderTime = HydrationReminderEngine.getNumberValue("hydrationReminder.lastReminderTime");
-        var cooldown = HydrationReminderEngine.cooldownSeconds(currentLevel);
+        var lastReminderLevel = HydrationReminderEngine.getNumberValue(
+            "hydrationReminder.lastReminderLevel");
+        var cooldown = HydrationReminderEngine.cooldownSecondsForLevels(
+            currentLevel, lastReminderLevel);
         if ((nowValue - lastReminderTime) < cooldown) {
             return false;
         }
@@ -128,56 +200,119 @@ class HydrationReminderEngine {
         return true;
     }
 
-    private static function cooldownSeconds(level) {
-        if (level == 1) {
-            return AppConfig.REMINDER_COOLDOWN_LEVEL1_SEC;
+    static function cooldownSecondsForLevels(
+            currentLevel as Number, lastLevel as Number) as Number {
+        if (lastLevel > 0 && currentLevel > lastLevel) {
+            return AppConfig.REMINDER_ESCALATION_COOLDOWN_SEC;
         }
-        if (level == 2) {
-            return AppConfig.REMINDER_COOLDOWN_LEVEL2_SEC;
+        if (currentLevel == 1) {
+            return AppConfig.REMINDER_REPEAT_LEVEL1_SEC;
         }
-        return AppConfig.REMINDER_COOLDOWN_LEVEL3_SEC;
+        if (currentLevel == 2) {
+            return AppConfig.REMINDER_REPEAT_LEVEL2_SEC;
+        }
+        return AppConfig.REMINDER_REPEAT_LEVEL3_SEC;
     }
 
     private static function selectMessage(level) {
         var messages = PersonalMessages.reminderMessages(level) as Array<String>;
-        var lastText = HydrationReminderEngine.getStringValue("hydrationReminder.lastMessageText");
-        var count = messages.size();
-        if (count == 0) {
-            return "Amor, um golinho de água 💧";
-        }
-        var nextIndex = HydrationReminderEngine.getNumberValue("hydrationReminder.lastMessageIndex") + 1;
-        nextIndex = nextIndex % count;
-        if (nextIndex < 0) { nextIndex = 0; }
-
-        if (messages[nextIndex].equals(lastText)) {
-            nextIndex = (nextIndex + 1) % count;
-        }
-
-        var message = messages[nextIndex];
-        Storage.setValue("hydrationReminder.lastMessageText", message);
-        Storage.setValue("hydrationReminder.lastMessageIndex", nextIndex);
-        return message;
+        return HydrationReminderEngine.selectNextMessage(
+            messages,
+            HydrationReminderEngine.reminderCursorKey(level),
+            "Amor, um golinho de água 💧");
     }
 
     private static function selectCelebrationMessage() {
         var messages = PersonalMessages.celebrationMessages() as Array<String>;
-        var lastText = HydrationReminderEngine.getStringValue("hydrationReminder.lastMessageText");
+        return HydrationReminderEngine.selectNextMessage(
+            messages,
+            "hydrationReminder.celebrationCursor",
+            "Boa, amor! Meta do dia atingida!");
+    }
+
+    private static function selectNextMessage(
+            messages as Array<String>, cursorKey as String,
+            fallback as String) as String {
         var count = messages.size();
         if (count == 0) {
-            return "Boa, amor! Meta do dia atingida!";
+            return fallback;
         }
-        var nextIndex = HydrationReminderEngine.getNumberValue("hydrationReminder.lastMessageIndex") + 1;
-        nextIndex = nextIndex % count;
-        if (nextIndex < 0) { nextIndex = 0; }
 
-        if (messages[nextIndex].equals(lastText)) {
+        var lastText = HydrationReminderEngine.getStringValue(
+            "hydrationReminder.lastMessageText");
+        var cursor = HydrationReminderEngine.getCursorValue(cursorKey);
+        var nextIndex = HydrationReminderEngine.nextMessageIndex(
+            messages, lastText, cursor);
+        return messages[nextIndex];
+    }
+
+    static function nextMessageIndex(
+            messages as Array<String>, lastText as String,
+            cursor as Number) as Number {
+        var count = messages.size();
+        if (count == 0) {
+            return -1;
+        }
+
+        var nextIndex = cursor;
+        if (nextIndex < 0 || nextIndex >= count) {
+            nextIndex = 0;
+            for (var i = 0; i < count; i += 1) {
+                if (messages[i].equals(lastText)) {
+                    nextIndex = (i + 1) % count;
+                    break;
+                }
+            }
+        }
+
+        // The text is a second guard for upgrades from versions that did not
+        // persist per-level cursors or for a partially written Storage state.
+        if (count > 1 && messages[nextIndex].equals(lastText)) {
             nextIndex = (nextIndex + 1) % count;
         }
+        return nextIndex;
+    }
 
-        var message = messages[nextIndex];
+    private static function recordReminderMessageSelection(
+            message as String, level as Number) as Void {
+        var messages = PersonalMessages.reminderMessages(level) as Array<String>;
+        HydrationReminderEngine.recordMessageSelection(
+            message, messages,
+            HydrationReminderEngine.reminderCursorKey(level));
+    }
+
+    private static function recordCelebrationMessageSelection(
+            message as String) as Void {
+        var messages = PersonalMessages.celebrationMessages() as Array<String>;
+        HydrationReminderEngine.recordMessageSelection(
+            message, messages, "hydrationReminder.celebrationCursor");
+    }
+
+    private static function recordMessageSelection(
+            message as String, messages as Array<String>,
+            cursorKey as String) as Void {
+        for (var i = 0; i < messages.size(); i += 1) {
+            if (messages[i].equals(message)) {
+                // The per-level cursor is the primary, single-key state. Save
+                // it first so switching levels or an interrupted secondary
+                // write cannot restart this level's sequence.
+                Storage.setValue(cursorKey, (i + 1) % messages.size());
+                break;
+            }
+        }
+        // Global text is only a migration/cross-level consecutive guard.
         Storage.setValue("hydrationReminder.lastMessageText", message);
-        Storage.setValue("hydrationReminder.lastMessageIndex", nextIndex);
-        return message;
+    }
+
+    private static function reminderCursorKey(level as Number) as String {
+        return "hydrationReminder.messageCursorL" + level;
+    }
+
+    private static function getCursorValue(key as String) as Number {
+        var value = Storage.getValue(key);
+        if (value instanceof Lang.Number) { return value; }
+        if (value instanceof Lang.Long) { return value.toNumber(); }
+        return -1;
     }
 
     private static function recordReminder(nowValue, level) {
@@ -201,7 +336,11 @@ class HydrationReminderEngine {
 
     private static function getNumberValue(key) {
         var value = Storage.getValue(key);
-        return value instanceof Lang.Number ? value : 0;
+        if (value instanceof Lang.Number) { return value; }
+        if (value instanceof Lang.Long) { return value.toNumber(); }
+        if (value instanceof Lang.Float) { return value.toNumber(); }
+        if (value instanceof Lang.Double) { return value.toNumber(); }
+        return 0;
     }
 
     private static function getStringValue(key) {
