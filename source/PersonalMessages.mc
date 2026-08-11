@@ -17,8 +17,8 @@ class PersonalMessages {
                 "Você não é um cacto 🌵😂 Bebe água.",
                 "Linda… cadê essa garrafinha? 😂",
                 "Ei atleta, água também faz parte do treino.",
-                "Dani, seu Garmin está mandando você beber água. Eu só concordo 😂",
-                "Dani, hidratação atrasada: bora recuperar 💧"
+                "Daniela, seu Garmin está mandando você beber água. Eu só concordo 😂",
+                "Daniela, hidratação atrasada: bora recuperar 💧"
             ];
         }
         if (level == 3) {

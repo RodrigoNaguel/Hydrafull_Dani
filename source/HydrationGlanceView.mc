@@ -11,7 +11,11 @@ class HydrationGlanceView extends WatchUi.GlanceView {
         var layout = new UiHelper.Layout(dc);
         var waterMl = HydrationStore.getNumber("waterMl");
         var caffeineMg = HydrationStore.getNumber("caffeineTodayMg");
-        var targetMl = HydrationCalculator.adjustedWaterMl(WellnessReader.weightKg(), HydrationStore.getNumber("lastCalories")).toNumber();
+        var weight = WellnessReader.weightKg();
+        var calories = HydrationStore.getNumber("lastCalories");
+        var stress = HydrationStore.getNumber("lastStress");
+        var bodyBattery = HydrationStore.getNumber("lastBodyBattery");
+        var targetMl = HydrationCalculator.adjustedWaterMl(weight, calories, stress, bodyBattery, caffeineMg).toNumber();
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();

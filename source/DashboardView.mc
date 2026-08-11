@@ -62,7 +62,10 @@ class DashboardView extends WatchUi.View {
         var waterMl = HydrationStore.getNumber("waterMl");
         var weightKg = WellnessReader.weightKg();
         var totalCalories = HydrationStore.getNumber("lastCalories");
-        var targetMl = HydrationCalculator.adjustedWaterMl(weightKg, totalCalories).toNumber();
+        var stress = HydrationStore.getNumber("lastStress");
+        var bodyBattery = HydrationStore.getNumber("lastBodyBattery");
+        var caffeine = HydrationStore.getNumber("caffeineTodayMg");
+        var targetMl = HydrationCalculator.adjustedWaterMl(weightKg, totalCalories, stress, bodyBattery, caffeine).toNumber();
         var rawProgress = (targetMl > 0) ? (waterMl.toFloat() / targetMl) : 0.0;
         var progress = HydrationCalculator.clamp(rawProgress, 0.0, 1.0);
 

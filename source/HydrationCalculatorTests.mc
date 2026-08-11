@@ -4,16 +4,17 @@ import Toybox.Test;
 (:test)
 function testBaselineWaterTargetIsClamped(logger as Test.Logger) as Boolean {
     logger.debug("checking baseline target limits");
-    return HydrationCalculator.baselineWaterMl(40.0) == 1600.0
-        && HydrationCalculator.baselineWaterMl(70.0) == 2100.0
-        && HydrationCalculator.baselineWaterMl(120.0) == 3000.0;
+    // 35ml/kg: 40kg -> 1400 -> clamped to 1800; 70kg -> 2450; 120kg -> 4200 -> clamped to 5000
+    return HydrationCalculator.baselineWaterMl(40.0) == 1800.0
+        && HydrationCalculator.baselineWaterMl(70.0) == 2450.0
+        && HydrationCalculator.baselineWaterMl(120.0) == 5000.0;
 }
 
 (:test)
 function testActivityCaloriesIncreaseTarget(logger as Test.Logger) as Boolean {
-    var target = HydrationCalculator.adjustedWaterMl(70.0, 2000);
+    var target = HydrationCalculator.adjustedWaterMl(70.0, 2000, null, null, null);
     logger.debug("adjusted target = " + target);
-    return target > 2419.9 && target < 2420.1;
+    return target > 3089.9 && target < 3090.1;
 }
 
 (:test)

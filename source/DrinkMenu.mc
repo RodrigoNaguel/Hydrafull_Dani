@@ -17,26 +17,23 @@ class DrinkMenuDelegate extends WatchUi.Menu2InputDelegate {
         if (id.length() >= 10 && id.substring(0, 10).equals("separator_")) {
             return;
         }
-        if (id.equals("diagnostics")) {
-            WatchUi.pushView(new DiagnosticsView(), new DiagnosticsDelegate(),
-                WatchUi.SLIDE_UP);
-            return;
-        }
         if (id.equals("test_notification")) {
             NotificationManager.notifyTest();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             return;
         }
 
-        var weightKg = WellnessReader.weightKg();
+        var weight = WellnessReader.weightKg();
+        var calories = HydrationStore.getNumber("lastCalories");
+        var stress = HydrationStore.getNumber("lastStress");
+        var bodyBattery = HydrationStore.getNumber("lastBodyBattery");
+        var caffeine = HydrationStore.getNumber("caffeineTodayMg");
         var target = HydrationCalculator.adjustedWaterMl(
-            weightKg, HydrationStore.getNumber("lastCalories")).toNumber();
+            weight, calories, stress, bodyBattery, caffeine).toNumber();
         var current = HydrationStore.getNumber("waterMl");
 
         // Water amounts
-        if (id.equals("quick_add")) {
-            HydrationStore.addWater(SettingsManager.quickAddMl());
-        } else if (id.equals("water250")) {
+        if (id.equals("water250")) {
             HydrationStore.addWater(250);
         } else if (id.equals("water500")) {
             HydrationStore.addWater(500);
@@ -81,13 +78,6 @@ class DrinkMenuDelegate extends WatchUi.Menu2InputDelegate {
 class DrinkMenuBuilder {
     static function pushMenu(view) {
         var menu = new WatchUi.Menu2({:title=>WatchUi.loadResource(Rez.Strings.menu_title)});
-
-        menu.addItem(new WatchUi.MenuItem(
-            WatchUi.loadResource(Rez.Strings.menu_quick_add),
-            WatchUi.loadResource(Rez.Strings.menu_quick_add_sub),
-            "quick_add",
-            {}
-        ));
 
         menu.addItem(new WatchUi.MenuItem(
             WatchUi.loadResource(Rez.Strings.menu_water250),
@@ -170,13 +160,6 @@ class DrinkMenuBuilder {
             WatchUi.loadResource(Rez.Strings.menu_test_notification),
             "",
             "test_notification",
-            {}
-        ));
-
-        menu.addItem(new WatchUi.MenuItem(
-            WatchUi.loadResource(Rez.Strings.menu_diagnostics),
-            "",
-            "diagnostics",
             {}
         ));
 

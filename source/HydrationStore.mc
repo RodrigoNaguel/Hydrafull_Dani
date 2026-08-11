@@ -25,9 +25,14 @@ class HydrationStore {
             Storage.setValue("hydrationReminder.goalCelebrationShown", false);
             Storage.setValue("hydrationReminder.lastNotificationAt", 0);
             Storage.setValue("hydrationReminder.lastNotificationReason", "-");
+            Storage.setValue("hydrationReminder.eodCursor", 0);
+            Storage.setValue("hydrationReminder.lastUrgentBase", "");
             Storage.setValue("background.lastRunAt", 0);
             Storage.setValue("background.lastRunReason", "-");
             Storage.setValue("lastCalories", 0);
+            Storage.setValue("caffeineEventsV2", [] as Array<Number>);
+            Storage.setValue("waterEventsV1", [] as Array<Number>);
+            Storage.setValue("caffeineTodayMg", 0);
             Storage.setValue("lastStress", 0);
             Storage.setValue("lastBodyBattery", 0);
             Storage.setValue("lastSnapshotAt", 0);
@@ -44,7 +49,7 @@ class HydrationStore {
         return number != null ? number : 0;
     }
 
-    static function addWater(ml) {
+    static function addWater(ml as Number) {
         ensureToday();
         Storage.setValue("waterMl", getNumber("waterMl") + ml);
         var quietSeconds = HydrationStore.quietPeriodSecondsForWater(ml);
@@ -52,11 +57,31 @@ class HydrationStore {
             Storage.setValue("hydrationReminder.quietUntil",
                 Time.now().value() + quietSeconds);
         }
+        
+        var events = loadWaterEvents();
+        if (events.size() >= 192) {
+            var trimmed = [] as Array<Number>;
+            var start = events.size() - 190;
+            if ((start % 2) != 0) { start += 1; }
+            for (var i = start; i + 1 < events.size(); i += 2) {
+                trimmed.add(events[i]);
+                trimmed.add(events[i + 1]);
+            }
+            events = trimmed;
+        }
+        events.add(Time.now().value());
+        events.add(ml);
+        Storage.setValue("waterEventsV1", events);
     }
 
     static function quietPeriodSecondsForWater(ml) as Number {
-        return ml >= AppConfig.REMINDER_MIN_WATER_FOR_QUIET_ML
-            ? AppConfig.REMINDER_AFTER_WATER_SEC : 0;
+        if (ml < AppConfig.REMINDER_MIN_WATER_FOR_QUIET_ML) {
+            return 0;
+        }
+        var baseMin = AppConfig.REMINDER_AFTER_WATER_SEC / 60; // usually 45
+        var propMin = (ml * 0.18).toNumber();
+        var quietMin = propMin > baseMin ? propMin : baseMin;
+        return quietMin * 60;
     }
 
     static function addCaffeine(mg as Number) {
@@ -183,6 +208,46 @@ class HydrationStore {
             Storage.setValue("caffeineEventsV2", clean);
         }
         return clean;
+    }
+
+    private static function loadWaterEvents() as Array<Number> {
+        var stored = Storage.getValue("waterEventsV1");
+        var clean = [] as Array<Number>;
+        if (!(stored instanceof Lang.Array)) {
+            return clean;
+        }
+
+        var raw = stored as Array<Storage.ValueType>;
+        var changed = (raw.size() % 2) != 0;
+        for (var i = 0; i + 1 < raw.size(); i += 2) {
+            var timestamp = numberOrNull(raw[i]);
+            var dose = numberOrNull(raw[i + 1]);
+            if (timestamp == null || dose == null) {
+                changed = true;
+                continue;
+            }
+            clean.add(timestamp);
+            clean.add(dose);
+        }
+
+        if (changed || clean.size() != raw.size()) {
+            Storage.setValue("waterEventsV1", clean);
+        }
+        return clean;
+    }
+
+    static function waterDrunkInLastSeconds(seconds as Number) as Number {
+        ensureToday();
+        var events = loadWaterEvents();
+        var now = Time.now().value();
+        var cutoff = now - seconds;
+        var total = 0;
+        for (var i = 0; i + 1 < events.size(); i += 2) {
+            if (events[i] >= cutoff) {
+                total += events[i + 1];
+            }
+        }
+        return total;
     }
 
     private static function numberOrNull(value) as Number? {

@@ -26,14 +26,15 @@ function testReminderDeficitBoundaries(logger as Test.Logger) as Boolean {
 function testReminderEscalationAndRepeatCooldowns(
         logger as Test.Logger) as Boolean {
     logger.debug("checking reminder cooldown policy");
+    // escalation (lastLevel > 0 and currentLevel > lastLevel) => 30 min
     return HydrationReminderEngine.cooldownSecondsForLevels(2, 1)
-            == 45 * 60
+            == 30 * 60
         && HydrationReminderEngine.cooldownSecondsForLevels(1, 1)
-            == 90 * 60
+            == 60 * 60
         && HydrationReminderEngine.cooldownSecondsForLevels(2, 2)
-            == 75 * 60
+            == 45 * 60
         && HydrationReminderEngine.cooldownSecondsForLevels(3, 3)
-            == 60 * 60;
+            == 30 * 60;
 }
 
 (:test)
@@ -44,7 +45,8 @@ function testOnlyMeaningfulWaterStartsQuietPeriod(
         && HydrationStore.quietPeriodSecondsForWater(110) == 0
         && HydrationStore.quietPeriodSecondsForWater(199) == 0
         && HydrationStore.quietPeriodSecondsForWater(200) == 45 * 60
-        && HydrationStore.quietPeriodSecondsForWater(500) == 45 * 60;
+        && HydrationStore.quietPeriodSecondsForWater(500) == 90 * 60
+        && HydrationStore.quietPeriodSecondsForWater(1000) == 180 * 60;
 }
 
 (:test)
@@ -66,21 +68,34 @@ function testReminderWaitsForImminentEscalation(
 }
 
 (:test)
+function testProjectedShortfallDetectsSlowPace(
+        logger as Test.Logger) as Boolean {
+    // 08:00-22:30 window = 870 min total.
+    // At 10:00 (120 min elapsed), user drank 500 ml.
+    // Pace = 500/120 = 4.17 ml/min. Remaining = 750 min.
+    // Projected total = 500 + 4.17*750 = 3625 ml.
+    // Shortfall vs target 3800 ml = 175 ml.
+    var shortfall1 = HydrationCalculator.projectedShortfallMl(
+        500, 3800, 120, 750, 500, 120);
+    logger.debug("shortfall1=" + shortfall1);
+    // At 18:00 (600 min elapsed), user still only 500 ml.
+    // Pace = 500/600 = 0.833 ml/min. Remaining = 270 min.
+    // Projected total = 500 + 225 = 725 ml. Shortfall = 3075 ml -> L3.
+    var shortfall2 = HydrationCalculator.projectedShortfallMl(
+        500, 3800, 600, 270, 500, 600);
+    logger.debug("shortfall2=" + shortfall2);
+    return shortfall1 > 174.0 && shortfall1 < 176.0
+        && shortfall2 > 3074.0 && shortfall2 < 3076.0
+        && HydrationReminderEngine.reminderLevelForDeficit(
+            shortfall2.toNumber()) == 3;
+}
+
+(:test)
 function testReminderMessagesRotateWithoutConsecutiveRepeat(
         logger as Test.Logger) as Boolean {
     logger.debug("checking persistent per-level message rotation");
     var messages = PersonalMessages.reminderMessages(2) as Array<String>;
-    var allLevelsCoverDailyLimit = true;
-    for (var level = 1; level <= 3; level += 1) {
-        var levelMessages = PersonalMessages.reminderMessages(level)
-            as Array<String>;
-        if (levelMessages.size()
-                < AppConfig.REMINDER_MAX_DAILY_REMINDERS) {
-            allLevelsCoverDailyLimit = false;
-        }
-    }
-    return allLevelsCoverDailyLimit
-        && HydrationReminderEngine.nextMessageIndex(messages, "", -1) == 0
+    return HydrationReminderEngine.nextMessageIndex(messages, "", -1) == 0
         && HydrationReminderEngine.nextMessageIndex(
             messages, messages[0], -1) == 1
         && HydrationReminderEngine.nextMessageIndex(

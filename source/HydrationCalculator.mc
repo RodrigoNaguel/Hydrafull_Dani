@@ -9,16 +9,62 @@ class HydrationCalculator {
 
     // Adjusts water target based on daily activity calories.
     // totalCalories comes from ActivityMonitor (BMR + active).
-    // Adds ~80ml per 100 active calories above resting baseline.
-    static function adjustedWaterMl(weightKg, totalCalories) {
+    // Resting baseline is estimated from weight (≈ Mifflin-St Jeor simplified)
+    // so that a heavy, lean athlete is not penalised by a hardcoded 1600 kcal.
+    // Each 100 kcal above resting adds ~80ml (0.8ml/kcal).
+    // Stress > 60 adds 10%. Body Battery < 30 adds 10%.
+    // Caffeine > 400mg adds 150ml per 200mg excess.
+    static function adjustedWaterMl(weightKg, totalCalories, stress, bodyBattery, caffeineMg) {
         var baseline = baselineWaterMl(weightKg);
-        // Rough resting calorie estimate for the day so far
-        var restingEstimate = 1600;
+        // Rough weight-proportional resting estimate (BMR ≈ 10 * kg + 500).
+        // This is deliberately conservative to ensure active calories are not
+        // under-counted for lean, high-muscle athletes.
+        var restingEstimate = (weightKg * 10.0 + 500.0).toNumber();
         if (totalCalories > restingEstimate) {
             var activeCalories = totalCalories - restingEstimate;
             baseline = baseline + (activeCalories.toFloat() * 0.8);
         }
-        return clamp(baseline, AppConfig.BASE_WATER_MIN_ML, 5000.0);
+
+        if (caffeineMg != null && caffeineMg > 400) {
+            baseline += ((caffeineMg - 400).toFloat() / 200.0) * 150.0;
+        }
+
+        if (stress != null && stress > 60) {
+            baseline *= 1.1;
+        }
+
+        if (bodyBattery != null && bodyBattery < 30) {
+            baseline *= 1.1;
+        }
+
+        return clamp(baseline, AppConfig.BASE_WATER_MIN_ML, AppConfig.BASE_WATER_MAX_ML);
+    }
+
+    // Projects whether the user will finish below the daily target at their
+    // current drinking pace.
+    //   waterMl        – ml consumed so far today
+    //   targetMl       – daily goal
+    //   elapsedMinutes – minutes elapsed since the window start
+    //   remainingMinutes – minutes left until window end
+    //   recentWaterMl  - ml consumed in the recent window
+    //   recentMinutes  - length of the recent window in minutes
+    // Returns the projected shortfall (>0 means they will fall short).
+    // Returns 0 when on pace or ahead of pace.
+    static function projectedShortfallMl(waterMl, targetMl,
+            elapsedMinutes, remainingMinutes, recentWaterMl, recentMinutes) {
+        if (elapsedMinutes <= 0) { return 0.0; }
+        
+        var paceMlPerMin;
+        if (elapsedMinutes <= recentMinutes) {
+            paceMlPerMin = waterMl.toFloat() / elapsedMinutes.toFloat();
+        } else {
+            paceMlPerMin = recentWaterMl.toFloat() / recentMinutes.toFloat();
+        }
+        
+        // Extrapolate to end of window
+        var projectedTotal = waterMl + paceMlPerMin * remainingMinutes.toFloat();
+        var shortfall = targetMl.toFloat() - projectedTotal;
+        return shortfall < 0.0 ? 0.0 : shortfall;
     }
 
     // Field calibration: body-mass change plus fluid balance.

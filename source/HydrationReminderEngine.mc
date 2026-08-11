@@ -28,7 +28,10 @@ class HydrationReminderEngine {
 
         var weightKg = WellnessReader.weightKg();
         var totalCalories = HydrationStore.getNumber("lastCalories");
-        var targetMl = HydrationCalculator.adjustedWaterMl(weightKg, totalCalories).toNumber();
+        var stress = HydrationStore.getNumber("lastStress");
+        var bodyBattery = HydrationStore.getNumber("lastBodyBattery");
+        var caffeine = HydrationStore.getNumber("caffeineTodayMg");
+        var targetMl = HydrationCalculator.adjustedWaterMl(weightKg, totalCalories, stress, bodyBattery, caffeine).toNumber();
         var waterMl = HydrationStore.getNumber("waterMl");
 
         if (targetMl <= 0) {
@@ -36,20 +39,54 @@ class HydrationReminderEngine {
         }
 
         if (waterMl >= targetMl) {
-            return HydrationReminderEngine.showGoalCelebrationIfNeeded(
-                nowValue);
+            return HydrationReminderEngine.showGoalCelebrationIfNeeded(nowValue);
         }
 
         if (HydrationReminderEngine.isQuietPeriodActive(nowValue)) {
             return "quiet";
         }
 
-        var expectedMl = HydrationReminderEngine.expectedProgressMl(now, targetMl);
+        var currentMinutes = HydrationReminderEngine.minutesOfDay(now);
+        var startMinutes = AppConfig.REMINDER_WINDOW_START_HOUR * 60;
+        var endMinutes = AppConfig.REMINDER_WINDOW_END_HOUR * 60
+            + AppConfig.REMINDER_WINDOW_END_MINUTE;
+
+        var expectedMl = HydrationReminderEngine.expectedProgressMlForMinutes(
+            currentMinutes, targetMl);
         if (expectedMl <= 0) {
             return "before-start";
         }
 
-        var deficitMl = expectedMl - waterMl;
+        // --- Smart deficit: blend immediate deficit + forward projection ---
+        //
+        // immediateDeficit: how many ml behind the linear pace right now.
+        //
+        // projectedShortfall: if the user keeps drinking at their current
+        //   pace until end of window, how many ml will they fall short?
+        //   This catches "drinking fine now but pace is slowing" scenarios.
+        //
+        // timeWeight: 0 at window start → 1 at window end. Gives projection
+        //   full voice late in the day while avoiding false alarms at 8 AM.
+        //
+        // effectiveDeficit = max(immediateDeficit, projectedShortfall × timeWeight)
+        var immediateDeficit = expectedMl > waterMl
+            ? (expectedMl - waterMl).toNumber() : 0;
+
+        var elapsedMinutes = currentMinutes - startMinutes;
+        var remainingMinutes = endMinutes - currentMinutes;
+        var windowTotal = endMinutes - startMinutes;
+        var timeWeight = windowTotal > 0
+            ? elapsedMinutes.toFloat() / windowTotal.toFloat() : 0.0;
+
+        var recentMinutes = 120;
+        var recentWaterMl = HydrationStore.waterDrunkInLastSeconds(recentMinutes * 60);
+
+        var projectedShortfall = HydrationCalculator.projectedShortfallMl(
+            waterMl, targetMl, elapsedMinutes, remainingMinutes, recentWaterMl, recentMinutes);
+        var projectedContrib = (projectedShortfall * timeWeight).toNumber();
+
+        var deficitMl = immediateDeficit > projectedContrib
+            ? immediateDeficit : projectedContrib;
         if (deficitMl <= 0) {
             return "on-track";
         }
@@ -67,10 +104,7 @@ class HydrationReminderEngine {
             "hydrationReminder.lastReminderLevel");
         if (currentLevel == lastReminderLevel
                 && HydrationReminderEngine.shouldReserveNextLevel(
-                    deficitMl, currentLevel, targetMl,
-                    HydrationReminderEngine.minutesOfDay(now))) {
-            // Avoid a lower-level repeat immediately before the next level;
-            // otherwise that repeat would postpone the more relevant alert.
+                    deficitMl, currentLevel, targetMl, currentMinutes)) {
             return "await-L" + (currentLevel + 1);
         }
 
@@ -79,7 +113,11 @@ class HydrationReminderEngine {
             return "daily-limit";
         }
 
-        var message = HydrationReminderEngine.selectMessage(currentLevel);
+        // L2 and L3 include the volume still needed so the message always
+        // conveys what action is required, not just that action is needed.
+        var remainingMl = (targetMl - waterMl).toNumber();
+        var message = HydrationReminderEngine.selectMessage(
+            currentLevel, remainingMl, remainingMinutes);
         if (NotificationManager.notifyReminder(message)) {
             HydrationReminderEngine.recordReminder(nowValue, currentLevel);
             HydrationReminderEngine.recordReminderMessageSelection(
@@ -193,11 +231,7 @@ class HydrationReminderEngine {
             "hydrationReminder.lastReminderLevel");
         var cooldown = HydrationReminderEngine.cooldownSecondsForLevels(
             currentLevel, lastReminderLevel);
-        if ((nowValue - lastReminderTime) < cooldown) {
-            return false;
-        }
-
-        return true;
+        return (nowValue - lastReminderTime) >= cooldown;
     }
 
     static function cooldownSecondsForLevels(
@@ -214,12 +248,60 @@ class HydrationReminderEngine {
         return AppConfig.REMINDER_REPEAT_LEVEL3_SEC;
     }
 
-    private static function selectMessage(level) {
+    // L1 messages are warm reminders (no volume shown — the pace gap is small).
+    // L2/L3 messages include how much is still needed so the user knows
+    // what action is required, not just that they are behind.
+    private static function selectMessage(
+            level as Number, remainingMl as Number,
+            minutesLeft as Number) as String {
+        if (level >= 2) {
+            return HydrationReminderEngine.buildUrgentMessage(
+                level, remainingMl, minutesLeft);
+        }
+        // Level 1: use rotating personal messages (no volume — gentle nudge).
         var messages = PersonalMessages.reminderMessages(level) as Array<String>;
         return HydrationReminderEngine.selectNextMessage(
             messages,
             HydrationReminderEngine.reminderCursorKey(level),
             "Amor, um golinho de água 💧");
+    }
+
+    // Builds an urgent message for L2/L3 that always states how many litres
+    // remain and, if fewer than 2 h are left, also the time pressure.
+    // The base string (from PersonalMessages) is stored under a separate key
+    // so the cursor can be updated correctly even though the full message
+    // includes a volume suffix that does not appear in the messages array.
+    private static function buildUrgentMessage(
+            level as Number, remainingMl as Number,
+            minutesLeft as Number) as String {
+        var liters = remainingMl.toFloat() / 1000.0;
+        var volStr = liters.format("%.1f") + "L";
+
+        // Select and advance the cursor for this level's base messages.
+        var baseMessages = PersonalMessages.reminderMessages(level) as Array<String>;
+        var base = HydrationReminderEngine.selectNextMessage(
+            baseMessages,
+            HydrationReminderEngine.reminderCursorKey(level),
+            "Amor, água!");
+
+        // Persist the base so recordReminderMessageSelection can update the
+        // cursor without searching for the concatenated full message.
+        Storage.setValue("hydrationReminder.lastUrgentBase", base);
+
+        // Append volume context. If the window is closing (<= 2 h) also add
+        // the time remaining so the urgency is self-evident.
+        var suffix;
+        if (minutesLeft <= 120) {
+            var hours = minutesLeft / 60;
+            var mins = minutesLeft % 60;
+            var timeStr = hours > 0
+                ? hours + "h" + mins.format("%02d")
+                : mins + "min";
+            suffix = " (" + volStr + " em " + timeStr + ")";
+        } else {
+            suffix = " (faltam " + volStr + ")";
+        }
+        return base + suffix;
     }
 
     private static function selectCelebrationMessage() {
@@ -276,8 +358,17 @@ class HydrationReminderEngine {
     private static function recordReminderMessageSelection(
             message as String, level as Number) as Void {
         var messages = PersonalMessages.reminderMessages(level) as Array<String>;
+        // For L2/L3 the notification body is base+suffix. The cursor should
+        // track the base string (which exists in PersonalMessages), not the
+        // full concatenated string.  buildUrgentMessage writes the base to
+        // lastUrgentBase; fall back to the full message for L1.
+        var trackText = message;
+        if (level >= 2) {
+            var stored = Storage.getValue("hydrationReminder.lastUrgentBase");
+            if (stored instanceof Lang.String) { trackText = stored; }
+        }
         HydrationReminderEngine.recordMessageSelection(
-            message, messages,
+            trackText, messages,
             HydrationReminderEngine.reminderCursorKey(level));
     }
 
