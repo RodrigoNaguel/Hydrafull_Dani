@@ -3,6 +3,9 @@
         <property id="notifications_enabled" type="boolean">true</property>
         <property id="reminders_enabled" type="boolean">true</property>
         <property id="quick_add_ml" type="number">250</property>
+        <property id="phone_drink_id" type="number">1</property>
+        <property id="phone_drink_servings" type="number">1</property>
+        <property id="phone_add_token" type="boolean">false</property>
     </properties>
 
     <settings>
@@ -14,6 +17,35 @@
         </setting>
         <setting propertyKey="@Properties.quick_add_ml" title="@Strings.menu_quick_add">
             <settingConfig type="numeric"/>
+        </setting>
+        <setting propertyKey="@Properties.phone_drink_id" title="@Strings.phone_drink_title">
+            <settingConfig type="list">
+                <listEntry value="1">@Strings.menu_water250</listEntry>
+                <listEntry value="2">@Strings.menu_water500</listEntry>
+                <listEntry value="3">@Strings.menu_water1000</listEntry>
+                <listEntry value="4">@Strings.menu_jungle</listEntry>
+                <listEntry value="5">@Strings.menu_espresso</listEntry>
+                <listEntry value="6">@Strings.menu_cafelongo</listEntry>
+                <listEntry value="7">@Strings.menu_supercoffee</listEntry>
+                <listEntry value="8">@Strings.menu_matcha</listEntry>
+                <listEntry value="9">@Strings.menu_matteleao</listEntry>
+                <listEntry value="10">@Strings.menu_suco</listEntry>
+                <listEntry value="11">@Strings.menu_refrizero</listEntry>
+                <listEntry value="12">@Strings.menu_monsterzero</listEntry>
+                <listEntry value="17">@Strings.menu_monsterzero_sm</listEntry>
+                <listEntry value="14">@Strings.menu_redbull_zero</listEntry>
+                <listEntry value="16">@Strings.menu_redbull_zero_big</listEntry>
+            </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.phone_drink_servings" title="@Strings.phone_servings_title">
+            <settingConfig type="list">
+                <listEntry value="1">@Strings.phone_servings_one</listEntry>
+                <listEntry value="2">@Strings.phone_servings_two</listEntry>
+                <listEntry value="3">@Strings.phone_servings_three</listEntry>
+            </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.phone_add_token" title="@Strings.phone_add_title">
+            <settingConfig type="boolean"/>
         </setting>
     </settings>
 </resources>

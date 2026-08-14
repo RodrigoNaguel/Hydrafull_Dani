@@ -4,10 +4,11 @@ import Toybox.Test;
 (:test)
 function testBaselineWaterTargetIsClamped(logger as Test.Logger) as Boolean {
     logger.debug("checking baseline target limits");
-    // 35ml/kg: 40kg -> 1400 -> clamped to 1800; 70kg -> 2450; 120kg -> 4200 -> clamped to 5000
+    // 35ml/kg: 40kg -> 1400 -> clamped to 1800; 70kg -> 2450;
+    // 150kg -> 5250 -> clamped to 5000.
     return HydrationCalculator.baselineWaterMl(40.0) == 1800.0
         && HydrationCalculator.baselineWaterMl(70.0) == 2450.0
-        && HydrationCalculator.baselineWaterMl(120.0) == 5000.0;
+        && HydrationCalculator.baselineWaterMl(150.0) == 5000.0;
 }
 
 (:test)

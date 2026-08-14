@@ -22,6 +22,7 @@ class HydrationServiceDelegate extends System.ServiceDelegate {
         var exitReason = reason;
         try {
             HydrationStore.ensureToday();
+            var phoneDrinkAdded = PhoneDrinkBridge.processPending();
             var lastSnapshotAt = HydrationStore.getNumber("lastSnapshotAt");
             var snapshotDue = reason.equals("activity")
                 || lastSnapshotAt <= 0
@@ -32,6 +33,7 @@ class HydrationServiceDelegate extends System.ServiceDelegate {
             }
             var evaluation = HydrationReminderEngine.evaluateAndNotify();
             exitReason = reason + "/" + evaluation;
+            if (phoneDrinkAdded) { exitReason += "/phone-added"; }
             HydrationStore.recordBackgroundRun(exitReason);
         } catch (error) {
             System.println("[HydraFuel] Background service error: " + error);

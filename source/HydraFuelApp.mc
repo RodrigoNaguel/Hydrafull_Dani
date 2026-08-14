@@ -13,22 +13,31 @@ class HydraFuelApp extends Application.AppBase {
 
     function onStart(state) {
         HydrationStore.ensureToday();
+        PhoneDrinkBridge.processPending();
         registerBackgroundEvents();
+    }
+
+    function onSettingsChanged() as Void {
+        if (PhoneDrinkBridge.processPending()) {
+            WatchUi.requestUpdate();
+        }
     }
 
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function getInitialView() {
         var dashboardView = new $.DashboardView();
         var statsView = new $.StatsView();
+        var historyView = new $.HistoryView();
 
         var viewPager = new $.ViewPager();
-        viewPager.setViews([dashboardView, statsView]);
+        viewPager.setViews([dashboardView, statsView, historyView]);
         viewPager.setProhibitSwipe(false); // Allow swiping
 
         var viewPagerIndicator = new $.PageIndicator();
-        viewPagerIndicator.setDotCount(2);
+        viewPagerIndicator.setDotCount(3);
         viewPagerIndicator.setDot(0, PAGE_INDICATOR_DOT_LIGHT);
         viewPagerIndicator.setDot(1, PAGE_INDICATOR_DOT_DARK);
+        viewPagerIndicator.setDot(2, PAGE_INDICATOR_DOT_DARK);
         viewPager.setIndicator(viewPagerIndicator);
         
         return [viewPager, new $.BaseDelegate(viewPager)];
@@ -102,6 +111,8 @@ class BaseDelegate extends WatchUi.BehaviorDelegate {
         var activeView = _viewPager.getActiveView();
         if (activeView instanceof DashboardView) {
             DrinkMenuBuilder.pushMenu(activeView);
+        } else if (activeView instanceof HistoryView) {
+            activeView.cyclePeriod();
         }
         return true;
     }

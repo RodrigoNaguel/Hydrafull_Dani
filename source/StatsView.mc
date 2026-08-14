@@ -25,11 +25,9 @@ class StatsView extends WatchUi.View {
 
         var waterMl = HydrationStore.getNumber("waterMl");
         var weightKg = WellnessReader.weightKg();
-        var totalCalories = HydrationStore.getNumber("lastCalories");
         var stress = HydrationStore.getNumber("lastStress");
         var bodyBattery = HydrationStore.getNumber("lastBodyBattery");
-        var caffeine = HydrationStore.getNumber("caffeineTodayMg");
-        var targetMl = HydrationCalculator.adjustedWaterMl(weightKg, totalCalories, stress, bodyBattery, caffeine).toNumber();
+        var targetMl = HydrationStore.dailyTargetMl();
         var waterProgress = (targetMl > 0) ? (waterMl.toFloat() / targetMl) : 0.0;
         var unitMl = WatchUi.loadResource(Rez.Strings.unit_ml);
         var unitMg = WatchUi.loadResource(Rez.Strings.stats_unit_mg);

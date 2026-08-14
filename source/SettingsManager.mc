@@ -31,6 +31,22 @@ class SettingsManager {
         SettingsManager.setNumber("quick_add_ml", amount);
     }
 
+    static function phoneDrinkId() as Number {
+        return SettingsManager.getNumber(
+            "phone_drink_id", DrinkCatalog.ID_WATER_250);
+    }
+
+    static function phoneDrinkServings() as Number {
+        var servings = SettingsManager.getNumber("phone_drink_servings", 1);
+        if (servings < 1) { return 1; }
+        if (servings > 3) { return 3; }
+        return servings;
+    }
+
+    static function phoneAddToken() as Boolean {
+        return SettingsManager.getBoolean("phone_add_token", false);
+    }
+
     private static function getBoolean(key as String, defaultValue as Boolean) as Boolean {
         try {
             var value = Properties.getValue(key);

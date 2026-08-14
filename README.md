@@ -25,11 +25,18 @@ Documentação Garmin:
 - [Background](https://developer.garmin.com/connect-iq/api-docs/Toybox/Background.html)
 - [Métricas do usuário](https://developer.garmin.com/connect-iq/core-topics/quantifying-the-user/)
 
-## MVP implementado
+## Funcionalidades implementadas
 
-- Registro de `250 ml` de água com um clique.
-- Registro de `80 mg` de cafeína com um clique.
-- Reinício diário dos totais, preservando doses de cafeína das últimas 48 h.
+- Registro de água, eletrólitos, cafés, chás, suco e refrigerante zero.
+- Monster Zero `473 ml / 142 mg` e Red Bull `250 ml / 80 mg`.
+- Cada lançamento do dia registra bebida, hidratação creditada, cafeína e
+  origem; na virada, o histórico compacto preserva os totais e a meta do dia.
+- Reinício diário dos totais, arquivando até 366 dias e preservando doses de
+  cafeína das últimas 48 h.
+- Relatórios de 7 dias, 4 semanas e 1 ano, com média, baixa, alta, metas
+  atingidas e gráfico por período.
+- Registro pelo celular usando as configurações do HydraFuel no Garmin
+  Connect ou no Connect IQ Store.
 - Estimativa de cafeína ainda não eliminada com meia-vida configurada no código.
 - Leitura segura do peso em `UserProfile`, com fallback explícito.
 - Leitura oportunista de calorias, stress e Body Battery, quando suportados.
@@ -37,8 +44,33 @@ Documentação Garmin:
 - Serviço temporal e callback de atividade concluída.
 - Motor isolado para suor, sódio, potássio e cafeína.
 
-Controles: deslize para cima/baixo ou use `UP/DOWN` para alternar; toque na
-tela ou use `START` para registrar.
+Controles: deslize ou use `UP/DOWN` para alternar entre painel, resumo diário e
+relatório. No painel, toque ou use `START` para abrir as bebidas. No relatório,
+`START/SELECT` alterna entre `7D`, `4S` e `1A`.
+
+### Registrar uma bebida pelo celular
+
+Abra as configurações do HydraFuel no Garmin Connect ou no Connect IQ Store:
+
+1. Escolha **Bebida para adicionar pelo celular**.
+2. Escolha de uma a três porções.
+3. Alterne **Adicionar agora** e salve. Para o lançamento seguinte, alterne o
+   botão novamente e salve.
+
+Cada valor sincronizado do botão é consumido uma vez nas execuções normais. Se
+o relógio estiver desconectado, o lançamento entra quando as configurações forem
+sincronizadas e o HydraFuel ou o serviço de background executar. Aguarde a
+sincronização antes de alternar novamente: App Settings é um formulário de
+estado, não uma fila, então várias alterações pendentes podem ser condensadas.
+Uma interrupção exatamente durante a gravação também pode perder o comando; uma
+garantia transacional exigiria um app companion com identificadores e ACKs.
+
+Essa integração usa o formulário público de [App Settings do Connect
+IQ](https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/).
+Ela não grava na tela nativa **Hidratação** do Garmin Connect mostrada no vídeo:
+a API pública do Connect IQ não oferece escrita nessa métrica. Um relatório
+completo no celular exigiria um app companion iOS/Android separado e a
+[comunicação com apps móveis](https://developer.garmin.com/connect-iq/core-topics/communicating-with-mobile-apps/).
 
 ## Modelo fisiológico
 
@@ -47,7 +79,7 @@ tela ou use `START` para registrar.
 O onboarding usa provisoriamente:
 
 ```text
-meta_estimada_ml = clamp(30 × peso_kg, 1600, 3000)
+meta_estimada_ml = clamp(35 × peso_kg, 1800, 5000)
 ```
 
 Isso é uma heurística editável, não uma necessidade clínica validada. A tela
@@ -201,7 +233,7 @@ O item **Diagnóstico** mostra:
 
 Política atual: checagem leve a cada 15 minutos, snapshot de sensores a cada
 hora, pausa de 45 minutos apenas para registros de pelo menos 200 ml, faixas de
-déficit em 200/450/800 ml e no máximo seis lembretes por dia. A execução real
+déficit em 200/450/800 ml e no máximo dez lembretes por dia. A execução real
 continua sujeita ao agendamento do sistema do relógio.
 
 As frases possuem um cursor persistente separado por nível. O app percorre
@@ -221,9 +253,9 @@ atualização do SDK pode exigir reaplicar essa compatibilidade.
 ## Próximos incrementos
 
 1. Onboarding e edição da meta de líquidos.
-2. Fontes de cafeína com mg editáveis: café, matcha, chá, energético e pré-treino.
+2. Volumes e cafeína editáveis por embalagem/variante.
 3. Formulário de pesagem pré/pós e histórico de calibrações por esporte/clima.
 4. Cartão de eletrólitos com intervalo e confiança explícitos.
 5. Horário de sono e alertas por dose + horário.
 6. Data Field complementar para atividade em andamento.
-7. Matriz de dispositivos e testes no simulator.
+7. Companion iOS/Android opcional para relatório completo no celular.

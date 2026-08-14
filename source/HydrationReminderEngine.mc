@@ -26,12 +26,7 @@ class HydrationReminderEngine {
             return "outside-window";
         }
 
-        var weightKg = WellnessReader.weightKg();
-        var totalCalories = HydrationStore.getNumber("lastCalories");
-        var stress = HydrationStore.getNumber("lastStress");
-        var bodyBattery = HydrationStore.getNumber("lastBodyBattery");
-        var caffeine = HydrationStore.getNumber("caffeineTodayMg");
-        var targetMl = HydrationCalculator.adjustedWaterMl(weightKg, totalCalories, stress, bodyBattery, caffeine).toNumber();
+        var targetMl = HydrationStore.dailyTargetMl();
         var waterMl = HydrationStore.getNumber("waterMl");
 
         if (targetMl <= 0) {
