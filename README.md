@@ -1,5 +1,13 @@
 # HydraFuel
 
+#### Video Demo: https://www.youtube.com/@RodrigoNaguel-s4u/shorts
+
+#### Description:
+
+HydraFuel is a Garmin Connect IQ application designed to help athletes
+track hydration, caffeine intake and electrolyte needs directly from
+their smartwatch.
+
 MVP para relógios Garmin Connect IQ focado em registro rápido de líquidos,
 estimativa individualizada de suor, eletrólitos e acompanhamento de cafeína.
 
@@ -249,6 +257,20 @@ enquanto o sistema fornece WebKitGTK 4.1 com libsoup3. Nesta máquina foi
 instalado um launcher de compatibilidade dentro do próprio SDK. O executável
 Garmin original está preservado como `bin/simulator.garmin-original`; uma
 atualização do SDK pode exigir reaplicar essa compatibilidade.
+
+## Main Project Files
+
+- `HydraFuelApp.mc` - Main application entry point and lifecycle management.
+- `AppConfig.mc` - Central configuration and application constants.
+- `HydrationStore.mc` - Stores hydration, caffeine and daily history data locally.
+- `HydrationCalculator.mc` - Contains hydration, sweat, electrolyte and caffeine calculations.
+- `WellnessReader.mc` - Reads compatible Garmin wellness and user profile metrics.
+- `DashboardView.mc` - Main interactive dashboard displayed on the watch.
+- `HydrationGlanceView.mc` - Provides the Garmin glance with daily hydration information.
+- `HydrationServiceDelegate.mc` - Handles background execution and periodic hydration reminders.
+- `manifest.xml` - Defines the Connect IQ application, permissions and supported Garmin devices.
+- `monkey.jungle` - Connect IQ build configuration.
+- `resources/` - Contains layouts, strings, settings and graphical resources used by the application.
 
 ## Próximos incrementos
 
