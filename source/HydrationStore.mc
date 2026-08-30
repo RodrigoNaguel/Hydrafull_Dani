@@ -231,6 +231,7 @@ class HydrationStore {
             Storage.setValue("caffeineTodayMg",
                 storedNumber("caffeineTodayMg") + caffeineMg);
         }
+        HydrationComplicationPublisher.publishCurrent();
         return true;
     }
 
@@ -329,6 +330,7 @@ class HydrationStore {
         // Persist the goal snapshot even when reminder evaluation returns
         // early because notifications are disabled or outside the window.
         dailyTargetMl();
+        HydrationComplicationPublisher.publishCurrent();
     }
 
     static function recordBackgroundRun(reason) {

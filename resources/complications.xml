@@ -1,0 +1,23 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <complications>
+        <complication id="0"
+                access="private"
+                longLabel="@Strings.hydration_complication_long"
+                shortLabel="@Strings.hydration_complication_short"
+                icon="@Drawables.HydrationComplicationIcon"
+                glancePreview="true">
+            <range>
+                <value>0</value>
+                <value>750</value>
+                <value>1500</value>
+                <value>2250</value>
+                <value>3000</value>
+            </range>
+        </complication>
+        <complication id="1"
+                access="private"
+            longLabel="@Strings.caffeine_complication_long"
+            shortLabel="@Strings.caffeine_complication_short"
+            icon="@Drawables.CaffeineComplicationIcon"/>
+    </complications>
+</resources>

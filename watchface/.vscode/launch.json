@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "monkeyc",
+            "request": "launch",
+            "name": "Run HydraFuel Face",
+            "stopAtLaunch": false,
+            "device": "${command:GetTargetDevice}"
+        },
+        {
+            "type": "monkeyc",
+            "request": "launch",
+            "name": "Run Face Tests",
+            "runTests": true,
+            "device": "${command:GetTargetDevice}"
+        },
+        {
+            "type": "monkeyc",
+            "request": "launch",
+            "name": "Run With HydraFuel",
+            "stopAtLaunch": false,
+            "complicationSubscriberFolder": "${workspaceFolder}",
+            "complicationPublisherFolder": "${workspaceFolder}/..",
+            "device": "${command:GetTargetDevice}"
+        }
+    ]
+}

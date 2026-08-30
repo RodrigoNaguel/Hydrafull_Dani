@@ -69,7 +69,13 @@
     <string id="notification_test_title" scope="background">HydraFuel</string>
     <string id="notification_test_message" scope="background">Daniela, os lembretes de hidratação estão funcionando! 💧</string>
     <string id="notification_subtitle" scope="background">Hidratação</string>
-    <string id="notification_action_open">Abrir</string>
+    <string id="notification_action_open" scope="background">Abrir</string>
+    <string id="notification_test_failed">Não foi possível mostrar a notificação. Verifique as configurações.</string>
+    <string id="hydration_complication_long">Hidratação HydraFuel</string>
+    <string id="hydration_complication_short">HYDRA</string>
+    <string id="caffeine_complication_long">Cafeína ativa</string>
+    <string id="caffeine_complication_short">CAFEÍNA</string>
+    <string id="hydration_complication_faceit">Hidratação</string>
     <string id="stats_title">Resumo do Dia</string>
     <string id="stats_water_title">Água</string>
     <string id="stats_caffeine_title" scope="glance">Cafeína</string>

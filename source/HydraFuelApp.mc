@@ -1,5 +1,6 @@
 import Toybox.Application;
 import Toybox.Background;
+import Toybox.Notifications;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Time;
@@ -7,25 +8,59 @@ import Toybox.WatchUi;
 
 (:glance, :background)
 class HydraFuelApp extends Application.AppBase {
+    public var launchDrinkMenu as Boolean = false;
+    public var mDashboardView = null;
+    public var foregroundUiReady as Boolean = false;
+
     function initialize() {
         AppBase.initialize();
     }
 
-    function onStart(state) {
+    function onStart(state as Dictionary?) as Void {
         HydrationStore.ensureToday();
         PhoneDrinkBridge.processPending();
+        HydrationComplicationPublisher.publishCurrent();
         registerBackgroundEvents();
+
+        if (state != null
+                && state.hasKey(:launchedFromNotification)
+                && NotificationManager.ACTION_OPEN_ADD_DRINK.equals(
+                    state[:launchedFromNotification])) {
+            launchDrinkMenu = true;
+        }
     }
 
     function onSettingsChanged() as Void {
         if (PhoneDrinkBridge.processPending()) {
             WatchUi.requestUpdate();
         }
+        HydrationComplicationPublisher.publishCurrent();
+    }
+
+    (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
+    function onNotificationMessage(message as Notifications.NotificationMessage) as Void {
+        if (message.type == Notifications.NOTIFICATION_MESSAGE_TYPE_SELECTED) {
+            if (NotificationManager.ACTION_OPEN_ADD_DRINK.equals(
+                    message.action)) {
+                launchDrinkMenu = true;
+                if (foregroundUiReady && mDashboardView != null) {
+                    try {
+                        launchDrinkMenu = false;
+                        DrinkMenuBuilder.pushMenu(mDashboardView);
+                    } catch (error) {
+                        launchDrinkMenu = true;
+                        System.println("[HydraFuel] Notification action error: "
+                            + error);
+                    }
+                }
+            }
+        }
     }
 
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function getInitialView() {
         var dashboardView = new $.DashboardView();
+        mDashboardView = dashboardView;
         var statsView = new $.StatsView();
         var historyView = new $.HistoryView();
 
@@ -39,6 +74,17 @@ class HydraFuelApp extends Application.AppBase {
         viewPagerIndicator.setDot(1, PAGE_INDICATOR_DOT_DARK);
         viewPagerIndicator.setDot(2, PAGE_INDICATOR_DOT_DARK);
         viewPager.setIndicator(viewPagerIndicator);
+
+        if (Toybox has :Notifications
+                && Toybox.Notifications has :registerForNotificationMessages) {
+            try {
+                Toybox.Notifications.registerForNotificationMessages(
+                    method(:onNotificationMessage));
+            } catch (error) {
+                System.println("[HydraFuel] Notification callback error: "
+                    + error);
+            }
+        }
         
         return [viewPager, new $.BaseDelegate(viewPager)];
     }

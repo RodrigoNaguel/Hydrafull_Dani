@@ -1,3 +1,4 @@
+import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Graphics;
@@ -37,11 +38,19 @@ class ViewPager extends WatchUi.View {
     public function onShow() as Void {
         if (!_isShown && _currentIndex < _views.size()) {
             _isShown = true;
+            var app = Application.getApp();
+            if (app != null && app has :foregroundUiReady) {
+                app.foregroundUiReady = true;
+            }
             _views[_currentIndex].onShow();
         }
     }
 
     public function onHide() as Void {
+        var app = Application.getApp();
+        if (app != null && app has :foregroundUiReady) {
+            app.foregroundUiReady = false;
+        }
         if (_isShown && _currentIndex < _views.size()) {
             _views[_currentIndex].onHide();
             _isShown = false;

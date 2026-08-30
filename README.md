@@ -1,6 +1,5 @@
 # HydraFuel
 
-#### Video Demo: https://youtube.com/shorts/3T8EXEk-GeI?si=HJQ-p31nTGMReGI3
 
 #### Description:
 
@@ -257,6 +256,17 @@ enquanto o sistema fornece WebKitGTK 4.1 com libsoup3. Nesta máquina foi
 instalado um launcher de compatibilidade dentro do próprio SDK. O executável
 Garmin original está preservado como `bin/simulator.garmin-original`; uma
 atualização do SDK pode exigir reaplicar essa compatibilidade.
+
+## HydraFuel Face
+
+O projeto separado da watch face está em [`watchface/`](watchface/). Ele mostra
+o progresso publicado pelo HydraFuel, mantém frequência cardíaca e Body Battery
+configuráveis e oferece estilos/cores compatíveis com o editor nativo dos
+relógios recentes e com App Settings nos demais modelos.
+
+A integração usa uma complication privada. Por isso, o app e a watch face devem
+ser assinados com a mesma developer key e o HydraFuel precisa ser aberto uma vez
+depois da instalação para publicar o primeiro valor.
 
 ## Main Project Files
 

@@ -69,7 +69,13 @@
     <string id="notification_test_title" scope="background">HydraFuel</string>
     <string id="notification_test_message" scope="background">Daniela, hydration reminders are working! 💧</string>
     <string id="notification_subtitle" scope="background">Hydration</string>
-    <string id="notification_action_open">Open</string>
+    <string id="notification_action_open" scope="background">Open</string>
+    <string id="notification_test_failed">Notification could not be shown. Check the app settings.</string>
+    <string id="hydration_complication_long">HydraFuel Hydration</string>
+    <string id="hydration_complication_short">HYDRA</string>
+    <string id="caffeine_complication_long">Caffeine Active</string>
+    <string id="caffeine_complication_short">CAFFEINE</string>
+    <string id="hydration_complication_faceit">Hydration</string>
     <string id="stats_title">Daily Summary</string>
     <string id="stats_water_title">Water</string>
     <string id="stats_caffeine_title" scope="glance">Caffeine</string>

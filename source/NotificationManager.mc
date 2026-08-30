@@ -1,9 +1,12 @@
+import Toybox.Application;
 import Toybox.Lang;
 import Toybox.Notifications;
 import Toybox.System;
 
 (:background)
 class NotificationManager {
+    static const ACTION_OPEN_ADD_DRINK = "open_add_drink";
+
     static function notificationsSupported() as Boolean {
         return (Toybox has :Notifications);
     }
@@ -69,7 +72,9 @@ class NotificationManager {
                     // These devices hide the subtitle in notification
                     // previews, so the rotating message belongs in the body.
                     :body => message,
-                    :dismissPrevious => dismissPrevious
+                    :dismissPrevious => dismissPrevious,
+                    :actions => [NotificationManager.openAddDrinkAction()]
+                        as Array<Notifications.Action>
                 }
             );
         } catch (error) {
@@ -85,5 +90,13 @@ class NotificationManager {
             System.println("[HydraFuel] Notification telemetry error: " + error);
         }
         return true;
+    }
+
+    static function openAddDrinkAction() as Notifications.Action {
+        return {
+            :label => Application.loadResource(
+                Rez.Strings.notification_action_open) as String,
+            :data => ACTION_OPEN_ADD_DRINK
+        } as Notifications.Action;
     }
 }

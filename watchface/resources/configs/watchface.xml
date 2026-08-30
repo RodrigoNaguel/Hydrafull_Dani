@@ -1,0 +1,52 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <watchface-config>
+        <styles>
+            <style id="0" label="@Strings.style_balanced" default="true"/>
+            <style id="1" label="@Strings.style_focus"/>
+            <style id="2" label="@Strings.style_minimal"/>
+        </styles>
+        <accentColors allowAny="true"/>
+        <data>
+            <complication id="1">
+                <type default="true">Complications.COMPLICATION_TYPE_CALORIES</type>
+                <type>Complications.COMPLICATION_TYPE_HEART_RATE</type>
+                <type>Complications.COMPLICATION_TYPE_BODY_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_STEPS</type>
+                <type>Complications.COMPLICATION_TYPE_STRESS</type>
+                <type>Complications.COMPLICATION_TYPE_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_NOTIFICATION_COUNT</type>
+                <type>Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE</type>
+            </complication>
+            <complication id="2">
+                <type default="true">Complications.COMPLICATION_TYPE_BODY_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_HEART_RATE</type>
+                <type>Complications.COMPLICATION_TYPE_STEPS</type>
+                <type>Complications.COMPLICATION_TYPE_STRESS</type>
+                <type>Complications.COMPLICATION_TYPE_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_CALORIES</type>
+                <type>Complications.COMPLICATION_TYPE_NOTIFICATION_COUNT</type>
+                <type>Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE</type>
+            </complication>
+            <complication id="3">
+                <type default="true">Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE</type>
+                <type>Complications.COMPLICATION_TYPE_BODY_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_HEART_RATE</type>
+                <type>Complications.COMPLICATION_TYPE_STEPS</type>
+                <type>Complications.COMPLICATION_TYPE_STRESS</type>
+                <type>Complications.COMPLICATION_TYPE_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_CALORIES</type>
+                <type>Complications.COMPLICATION_TYPE_NOTIFICATION_COUNT</type>
+            </complication>
+        </data>
+        <dataColors>
+            <color label="@Strings.color_white" default="true">0xFFFFFF</color>
+            <color label="@Strings.color_magenta">0xFF4FD8</color>
+            <color label="@Strings.color_lavender">0xB9A3FF</color>
+            <color label="@Strings.color_aqua">0x00D9FF</color>
+            <color label="@Strings.color_blue">0x339CFF</color>
+            <color label="@Strings.color_green">0x00E59B</color>
+            <color label="@Strings.color_orange">0xFF9F0A</color>
+            <color label="@Strings.color_violet">0x9B6DFF</color>
+        </dataColors>
+    </watchface-config>
+</resources>

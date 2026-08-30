@@ -35,6 +35,7 @@ class HydrationServiceDelegate extends System.ServiceDelegate {
             exitReason = reason + "/" + evaluation;
             if (phoneDrinkAdded) { exitReason += "/phone-added"; }
             HydrationStore.recordBackgroundRun(exitReason);
+            HydrationComplicationPublisher.publishCurrent();
         } catch (error) {
             System.println("[HydraFuel] Background service error: " + error);
             exitReason = reason + "/error";

@@ -26,6 +26,22 @@ class DashboardView extends WatchUi.View {
         stopCelebration();
     }
 
+    function onShow() as Void {
+        var app = Application.getApp();
+        if (app != null) {
+            if (app has :launchDrinkMenu && app.launchDrinkMenu) {
+                app.launchDrinkMenu = false;
+                try {
+                    DrinkMenuBuilder.pushMenu(self);
+                } catch (error) {
+                    app.launchDrinkMenu = true;
+                    System.println("[HydraFuel] Pending notification action error: "
+                        + error);
+                }
+            }
+        }
+    }
+
     function onUpdate(dc) {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();

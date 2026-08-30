@@ -14,8 +14,12 @@ class DrinkMenuDelegate extends WatchUi.Menu2InputDelegate {
         if (itemId instanceof Lang.String) {
             var actionId = itemId as String;
             if (actionId.equals("test_notification")) {
-                NotificationManager.notifyTest();
-                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+                if (NotificationManager.notifyTest()) {
+                    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+                } else {
+                    WatchUi.showToast(
+                        Rez.Strings.notification_test_failed, null);
+                }
             }
             return;
         }
