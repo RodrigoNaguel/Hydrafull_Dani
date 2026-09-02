@@ -8,7 +8,6 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
-import Toybox.ActivityMonitor;
 
 class HydraFuelFaceView extends WatchUi.WatchFace {
     private const HYDRATION_ID_KEY = "hydrafuel.complicationId";
@@ -45,7 +44,6 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private var _accentColor as Number = 0x873FD1;
     private var _dataColor as Number = Graphics.COLOR_WHITE;
     private var _backgroundColor as Number = Graphics.COLOR_BLACK;
-    private var _bandColor as Number = 0x161047;
     private var _smokeTexture as BitmapResource;
     private var _timeFont as Graphics.VectorFont? = null;
     private var _minuteFont as Graphics.VectorFont? = null;
@@ -78,7 +76,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         _bottomLeftId = new Complications.Id(Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE);
         _topRightId = new Complications.Id(Complications.COMPLICATION_TYPE_BODY_BATTERY);
         _heartRateId = new Complications.Id(Complications.COMPLICATION_TYPE_HEART_RATE);
-        _smokeTexture = WatchUi.loadResource(Rez.Drawables.SmokeTexture) as BitmapResource;
+        _smokeTexture = WatchUi.loadResource(Rez.Drawables.SmokeTextureNeonPurple) as BitmapResource;
         _hydrationId = null;
         _caffeineId = null;
     }
@@ -380,16 +378,6 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         try {
             var complication = Complications.getComplication(id);
             var type = id.getType();
-            if (type == Complications.COMPLICATION_TYPE_CALORIES) {
-                try {
-                    var info = ActivityMonitor.getInfo();
-                    if (info != null && info.calories != null) {
-                        var cals = info.calories as Number;
-                        if (cals < 0) { cals = 0; }
-                        return FaceFormatter.wholeNumberText(cals);
-                    }
-                } catch (err) {}
-            }
             if (type == Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE) {
                 return FaceFormatter.temperatureText(
                     complication.value,
@@ -502,8 +490,8 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
             if (hour == 0) { hour = 12; }
         }
 
-        var hourText = "09";
-        var minuteText = "28";
+        var hourText = "" + hour.format("%02d"); 
+        var minuteText = "" + clock.min.format("%02d");
         var hourFont = selectTimeFont();
         var minuteFont = selectMinuteFont();
         var hourY = layoutY(HOUR_Y);
@@ -814,38 +802,48 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private function drawEnergyBolt(dc as Dc, x as Number, y as Number, size as Number, color as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([
-            [x + size * 25 / 100, y - size * 108 / 100],
-            [x - size * 60 / 100, y + size * 32 / 100],
-            [x - size * 2 / 100, y + size * 32 / 100],
-            [x - size * 10 / 100, y + size],
-            [x + size * 78 / 100, y - size * 32 / 100],
-            [x + size * 2 / 100, y - size * 32 / 100]
+            [x + size * 30 / 100, y - size * 108 / 100],
+            [x + size * 22 / 100, y - size * 105 / 100],
+            [x - size * 60 / 100, y + size * 12 / 100],
+            [x - size * 57 / 100, y + size * 18 / 100],
+            [x - size * 6 / 100, y + size * 15 / 100],
+            [x - size * 1 / 100, y + size * 21 / 100],
+            [x - size * 9 / 100, y + size * 100 / 100],
+            [x + size * 78 / 100, y - size * 17 / 100],
+            [x + size * 75 / 100, y - size * 23 / 100],
+            [x + size * 19 / 100, y - size * 26 / 100]
         ]);
     }
 
     private function drawFlame(dc as Dc, x as Number, y as Number, size as Number, color as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x + size * 6 / 100, y + size * 25 / 100,
-            size * 65 / 100);
         dc.fillPolygon([
-            [x + size * 12 / 100, y - size * 94 / 100],
-            [x - size * 6 / 100, y - size * 81 / 100],
-            [x - size * 19 / 100, y - size * 50 / 100],
-            [x + size * 12 / 100, y - size * 6 / 100],
-            [x + size * 31 / 100, y + size * 19 / 100],
-            [x + size * 50 / 100, y - size * 25 / 100],
-            [x + size * 37 / 100, y - size * 50 / 100]
-        ]);
-
-        dc.setColor(_backgroundColor, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x - size * 5 / 100, y + size * 18 / 100,
-            size * 25 / 100);
-        dc.fillPolygon([
-            [x - size * 55 / 100, y - size * 12 / 100],
-            [x - size * 28 / 100, y - size * 28 / 100],
-            [x - size * 5 / 100, y - size * 5 / 100],
-            [x - size * 13 / 100, y + size * 18 / 100],
-            [x - size * 48 / 100, y + size * 6 / 100]
+            [x + size * 19 / 100, y - size * 94 / 100],
+            [x + size * 1 / 100, y - size * 81 / 100],
+            [x - size * 10 / 100, y - size * 60 / 100],
+            [x - size * 7 / 100, y - size * 29 / 100],
+            [x + size * 24 / 100, y + size * 17 / 100],
+            [x + size * 19 / 100, y + size * 41 / 100],
+            [x + size * 1 / 100, y + size * 51 / 100],
+            [x - size * 15 / 100, y + size * 43 / 100],
+            [x - size * 17 / 100, y + size * 25 / 100],
+            [x - size * 10 / 100, y + size * 15 / 100],
+            [x - size * 10 / 100, y - size * 1 / 100],
+            [x - size * 20 / 100, y + size * 10 / 100],
+            [x - size * 30 / 100, y + size * 10 / 100],
+            [x - size * 38 / 100, y + size * 2 / 100],
+            [x - size * 33 / 100, y - size * 24 / 100],
+            [x - size * 49 / 100, y - size * 8 / 100],
+            [x - size * 59 / 100, y + size * 23 / 100],
+            [x - size * 56 / 100, y + size * 46 / 100],
+            [x - size * 43 / 100, y + size * 69 / 100],
+            [x - size * 7 / 100, y + size * 90 / 100],
+            [x + size * 35 / 100, y + size * 85 / 100],
+            [x + size * 63 / 100, y + size * 59 / 100],
+            [x + size * 71 / 100, y + size * 38 / 100],
+            [x + size * 68 / 100, y + size * 2 / 100],
+            [x + size * 24 / 100, y - size * 60 / 100],
+            [x + size * 16 / 100, y - size * 81 / 100]
         ]);
     }
 
@@ -945,11 +943,21 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
 
     private function drawCloud(dc as Dc, x as Number, y as Number, size as Number, color as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x - size * 25 / 100, y + size * 8 / 100, size * 22 / 100);
-        dc.fillCircle(x + size * 25 / 100, y + size * 8 / 100, size * 18 / 100);
-        dc.fillCircle(x, y - size * 10 / 100, size * 30 / 100);
-        dc.fillRectangle(x - size * 58 / 100, y - size * 10 / 100,
-            size * 103 / 100, size * 38 / 100);
+        dc.fillPolygon([
+            [x - size * 53 / 100, y - size * 24 / 100],
+            [x - size * 58 / 100, y - size * 13 / 100],
+            [x - size * 58 / 100, y + size * 5 / 100],
+            [x - size * 51 / 100, y + size * 17 / 100],
+            [x - size * 36 / 100, y + size * 28 / 100],
+            [x + size * 24 / 100, y + size * 30 / 100],
+            [x + size * 43 / 100, y + size * 17 / 100],
+            [x + size * 45 / 100, y - size * 2 / 100],
+            [x + size * 40 / 100, y - size * 11 / 100],
+            [x + size * 31 / 100, y - size * 18 / 100],
+            [x + size * 14 / 100, y - size * 19 / 100],
+            [x - size * 6 / 100, y - size * 38 / 100],
+            [x - size * 34 / 100, y - size * 38 / 100]
+        ]);
     }
 
     private function drawAlwaysOn(dc as Dc) as Void {
@@ -980,13 +988,27 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
 
     private function drawDrop(dc as Dc, x as Number, y as Number, radius as Number, color as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x, y + radius * 14 / 100, radius * 66 / 100);
         dc.fillPolygon([
-            [x, y - radius + 1],
-            [x - radius * 52 / 100, y + radius * 8 / 100],
-            [x - radius * 38 / 100, y + radius * 52 / 100],
-            [x + radius * 38 / 100, y + radius * 52 / 100],
-            [x + radius * 52 / 100, y + radius * 8 / 100]
+            [x, y - radius * 69 / 100],
+            [x - radius * 12 / 100, y - radius * 53 / 100],
+            [x - radius * 26 / 100, y - radius * 37 / 100],
+            [x - radius * 37 / 100, y - radius * 20 / 100],
+            [x - radius * 45 / 100, y - radius * 4 / 100],
+            [x - radius * 49 / 100, y + radius * 12 / 100],
+            [x - radius * 48 / 100, y + radius * 29 / 100],
+            [x - radius * 43 / 100, y + radius * 45 / 100],
+            [x - radius * 29 / 100, y + radius * 61 / 100],
+            [x - radius * 12 / 100, y + radius * 69 / 100],
+            [x, y + radius * 71 / 100],
+            [x + radius * 12 / 100, y + radius * 69 / 100],
+            [x + radius * 29 / 100, y + radius * 61 / 100],
+            [x + radius * 43 / 100, y + radius * 45 / 100],
+            [x + radius * 48 / 100, y + radius * 29 / 100],
+            [x + radius * 49 / 100, y + radius * 12 / 100],
+            [x + radius * 45 / 100, y - radius * 4 / 100],
+            [x + radius * 37 / 100, y - radius * 20 / 100],
+            [x + radius * 26 / 100, y - radius * 37 / 100],
+            [x + radius * 12 / 100, y - radius * 53 / 100]
         ]);
     }
 
@@ -1043,22 +1065,31 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
 
     private function resolvePalette() as Void {
         _backgroundColor = Graphics.COLOR_BLACK;
+
         if (_theme == FaceTheme.DEEP_PURPLE) {
-            _bandColor = 0x240B3D;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureDeepPurple) as BitmapResource;
         } else if (_theme == FaceTheme.MIDNIGHT_BLUE) {
-            _bandColor = 0x071B54;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureMidnightBlue) as BitmapResource;
         } else if (_theme == FaceTheme.GRAPHITE) {
-            _bandColor = 0x16191D;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureGraphite) as BitmapResource;
         } else if (_theme == FaceTheme.PURE_BLACK) {
-            _bandColor = Graphics.COLOR_BLACK;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureBlack) as BitmapResource;
         } else if (_theme == FaceTheme.GREEN) {
-            _bandColor = 0x063A2B;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureGreen) as BitmapResource;
         } else if (_theme == FaceTheme.BLUE) {
-            _bandColor = 0x082A52;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureBlue) as BitmapResource;
         } else if (_theme == FaceTheme.RED) {
-            _bandColor = 0x4A0B18;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureRed) as BitmapResource;
         } else {
-            _bandColor = 0x161047;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureNeonPurple) as BitmapResource;
         }
     }
 }

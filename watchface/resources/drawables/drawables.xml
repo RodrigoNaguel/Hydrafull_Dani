@@ -1,6 +1,35 @@
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.svg"/>
-    <bitmap id="SmokeTexture" filename="reference_glow_soft.png"
+
+    <bitmap id="SmokeTextureNeonPurple" filename="reference_glow_neon_purple.png"
+            automaticPalette="true" dithering="floyd_steinberg"
+            scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
+            compress="true"/>
+    <bitmap id="SmokeTextureDeepPurple" filename="reference_glow_deep_purple.png"
+            automaticPalette="true" dithering="floyd_steinberg"
+            scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
+            compress="true"/>
+    <bitmap id="SmokeTextureMidnightBlue" filename="reference_glow_midnight_blue.png"
+            automaticPalette="true" dithering="floyd_steinberg"
+            scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
+            compress="true"/>
+    <bitmap id="SmokeTextureGraphite" filename="reference_glow_graphite.png"
+            automaticPalette="true" dithering="floyd_steinberg"
+            scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
+            compress="true"/>
+    <bitmap id="SmokeTextureBlack" filename="reference_glow_black.png"
+            automaticPalette="true" dithering="floyd_steinberg"
+            scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
+            compress="true"/>
+    <bitmap id="SmokeTextureGreen" filename="reference_glow_green.png"
+            automaticPalette="true" dithering="floyd_steinberg"
+            scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
+            compress="true"/>
+    <bitmap id="SmokeTextureBlue" filename="reference_glow_blue.png"
+            automaticPalette="true" dithering="floyd_steinberg"
+            scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
+            compress="true"/>
+    <bitmap id="SmokeTextureRed" filename="reference_glow_red.png"
             automaticPalette="true" dithering="floyd_steinberg"
             scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
             compress="true"/>

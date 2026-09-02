@@ -1,0 +1,88 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <settings>
+        <setting propertyKey="@Properties.style" title="@Strings.setting_style">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.style_balanced</listEntry>
+                <listEntry value="1">@Strings.style_focus</listEntry>
+                <listEntry value="2">@Strings.style_minimal</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.left_data" title="@Strings.setting_left_data">
+            <settingConfig type="list">
+                <listEntry value="18">@Strings.data_heart_rate</listEntry>
+                <listEntry value="23">@Strings.data_body_battery</listEntry>
+                <listEntry value="2">@Strings.data_steps</listEntry>
+                <listEntry value="22">@Strings.data_stress</listEntry>
+                <listEntry value="1">@Strings.data_watch_battery</listEntry>
+                <listEntry value="3">@Strings.data_calories</listEntry>
+                <listEntry value="17">@Strings.data_notifications</listEntry>
+                <listEntry value="38">@Strings.data_temperature</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.center_data" title="@Strings.setting_center_data">
+            <settingConfig type="list">
+                <listEntry value="18">@Strings.data_heart_rate</listEntry>
+                <listEntry value="23">@Strings.data_body_battery</listEntry>
+                <listEntry value="2">@Strings.data_steps</listEntry>
+                <listEntry value="22">@Strings.data_stress</listEntry>
+                <listEntry value="1">@Strings.data_watch_battery</listEntry>
+                <listEntry value="3">@Strings.data_calories</listEntry>
+                <listEntry value="17">@Strings.data_notifications</listEntry>
+                <listEntry value="38">@Strings.data_temperature</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.right_data" title="@Strings.setting_right_data">
+            <settingConfig type="list">
+                <listEntry value="23">@Strings.data_body_battery</listEntry>
+                <listEntry value="18">@Strings.data_heart_rate</listEntry>
+                <listEntry value="2">@Strings.data_steps</listEntry>
+                <listEntry value="22">@Strings.data_stress</listEntry>
+                <listEntry value="1">@Strings.data_watch_battery</listEntry>
+                <listEntry value="3">@Strings.data_calories</listEntry>
+                <listEntry value="17">@Strings.data_notifications</listEntry>
+                <listEntry value="38">@Strings.data_temperature</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.background_theme" title="@Strings.setting_background">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.theme_neon_purple</listEntry>
+                <listEntry value="1">@Strings.theme_deep_purple</listEntry>
+                <listEntry value="2">@Strings.theme_midnight_blue</listEntry>
+                <listEntry value="3">@Strings.theme_graphite</listEntry>
+                <listEntry value="4">@Strings.theme_black</listEntry>
+                <listEntry value="5">@Strings.theme_green</listEntry>
+                <listEntry value="6">@Strings.theme_blue</listEntry>
+                <listEntry value="7">@Strings.theme_red</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.accent_color" title="@Strings.setting_accent">
+            <settingConfig type="list">
+                <listEntry value="8863697">@Strings.color_violet</listEntry>
+                <listEntry value="16732120">@Strings.color_magenta</listEntry>
+                <listEntry value="8072447">@Strings.color_purple</listEntry>
+                <listEntry value="12166143">@Strings.color_lavender</listEntry>
+                <listEntry value="55807">@Strings.color_aqua</listEntry>
+                <listEntry value="3382527">@Strings.color_blue</listEntry>
+                <listEntry value="58779">@Strings.color_green</listEntry>
+                <listEntry value="16752394">@Strings.color_orange</listEntry>
+                <listEntry value="16729402">@Strings.color_red</listEntry>
+                <listEntry value="16777215">@Strings.color_white</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.data_color" title="@Strings.setting_data_color">
+            <settingConfig type="list">
+                <listEntry value="16777215">@Strings.color_white</listEntry>
+                <listEntry value="12166143">@Strings.color_lavender</listEntry>
+                <listEntry value="16732120">@Strings.color_magenta</listEntry>
+                <listEntry value="55807">@Strings.color_aqua</listEntry>
+            </settingConfig>
+        </setting>
+    </settings>
+</resources>

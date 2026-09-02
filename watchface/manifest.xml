@@ -1,11 +1,6 @@
 <?xml version="1.0"?>
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
-    <iq:application id="f7eafd193f334c9bb21591039d51fd61"
-            type="watchface"
-            name="@Strings.AppName"
-            entry="HydraFuelFaceApp"
-            launcherIcon="@Drawables.LauncherIcon"
-            minApiLevel="5.1.0">
+    <iq:application id="f7eafd193f334c9bb21591039d51fd61" type="watchface" name="@Strings.AppName" entry="HydraFuelFaceApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.1.0">
         <iq:products>
             <iq:product id="epix2"/>
             <iq:product id="epix2pro42mm"/>
