@@ -5,7 +5,7 @@
         <property id="center_data" type="number">38</property>
         <property id="right_data" type="number">23</property>
         <property id="background_theme" type="number">0</property>
-        <property id="accent_color" type="number">16732120</property>
+        <property id="accent_color" type="number">8863697</property>
         <property id="secondary_color" type="number">12166143</property>
         <property id="data_color" type="number">16777215</property>
     </properties>
@@ -68,6 +68,7 @@
         </setting>
         <setting propertyKey="@Properties.accent_color" title="@Strings.setting_accent">
             <settingConfig type="list">
+                <listEntry value="8863697">@Strings.color_violet</listEntry>
                 <listEntry value="16732120">@Strings.color_magenta</listEntry>
                 <listEntry value="8072447">@Strings.color_purple</listEntry>
                 <listEntry value="12166143">@Strings.color_lavender</listEntry>

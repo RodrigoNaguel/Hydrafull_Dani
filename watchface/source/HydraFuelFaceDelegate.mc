@@ -36,16 +36,16 @@ class HydraFuelFaceDelegate extends WatchUi.WatchFaceDelegate {
     function onTap(clickEvent as ClickEvent) as Boolean {
         if (!_editMode) { return false; }
         var coordinates = clickEvent.getCoordinates();
-        if (_view.isInsideLeftSlot(coordinates[0], coordinates[1])) {
-            setSelectedComplication(FaceSlot.LEFT);
+        if (_view.isInsideTopLeftSlot(coordinates[0], coordinates[1])) {
+            setSelectedComplication(FaceSlot.TOP_LEFT);
             return true;
         }
-        if (_view.isInsideCenterSlot(coordinates[0], coordinates[1])) {
-            setSelectedComplication(FaceSlot.CENTER);
+        if (_view.isInsideBottomLeftSlot(coordinates[0], coordinates[1])) {
+            setSelectedComplication(FaceSlot.BOTTOM_LEFT);
             return true;
         }
-        if (_view.isInsideRightSlot(coordinates[0], coordinates[1])) {
-            setSelectedComplication(FaceSlot.RIGHT);
+        if (_view.isInsideTopRightSlot(coordinates[0], coordinates[1])) {
+            setSelectedComplication(FaceSlot.TOP_RIGHT);
             return true;
         }
         return false;
@@ -55,17 +55,17 @@ class HydraFuelFaceDelegate extends WatchUi.WatchFaceDelegate {
         if (_editMode) { return false; }
         var coordinates = clickEvent.getCoordinates();
         var id = null;
-        if (_view.isInsideLeftSlot(coordinates[0], coordinates[1])) {
-            id = _view.getLeftId();
-        } else if (_view.isInsideCenterSlot(
-                coordinates[0], coordinates[1])) {
-            id = _view.getCenterId();
-        } else if (_view.isInsideRightSlot(coordinates[0], coordinates[1])) {
-            id = _view.getRightId();
-        } else if (_view.isInsideHydration(
-                coordinates[0], coordinates[1])) {
+
+        if (_view.isInsideTopLeftSlot(coordinates[0], coordinates[1])) {
+            id = _view.getTopLeftId();
+        } else if (_view.isInsideBottomLeftSlot(coordinates[0], coordinates[1])) {
+            id = _view.getBottomLeftId();
+        } else if (_view.isInsideTopRightSlot(coordinates[0], coordinates[1])) {
+            id = _view.getTopRightId();
+        } else if (_view.isInsideHydration(coordinates[0], coordinates[1])) {
             id = _view.getHydrationId();
         }
+
         if (id == null) { return false; }
         try {
             Complications.exitTo(id as Complications.Id);
