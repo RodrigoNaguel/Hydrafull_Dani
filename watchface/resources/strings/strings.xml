@@ -18,6 +18,9 @@
     <string id="data_stress">Stress</string>
     <string id="data_watch_battery">Watch battery</string>
     <string id="data_calories">Calories</string>
+    <string id="setting_calorie_mode">Calories type</string>
+    <string id="calorie_active">Active</string>
+    <string id="calorie_total">Total</string>
     <string id="data_notifications">Notifications</string>
     <string id="data_temperature">Current temperature</string>
     <string id="theme_neon_purple">Neon purple</string>

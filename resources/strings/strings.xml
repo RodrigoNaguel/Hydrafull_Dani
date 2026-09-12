@@ -20,6 +20,14 @@
     <string id="label_love_remind">love,</string>
     <string id="label_forget_water">you are forgetting to drink water</string>
     <string id="menu_title">Add Drink</string>
+    <string id="drink_register">Register</string>
+    <string id="drink_cancel">Cancel</string>
+    <string id="drink_undo_last">Undo last drink</string>
+    <string id="drink_today">Today</string>
+    <string id="drink_undo_confirm">Undo this drink</string>
+    <string id="drink_generic">Drink</string>
+    <string id="drink_undo_unavailable">Drink changed or is no longer available. Reopen the menu.</string>
+    <string id="drink_save_failed">Could not complete the action. Check your total.</string>
     <string id="menu_water250">Water 250ml</string>
     <string id="menu_water250_sub">glass</string>
     <string id="menu_water500">Water 500ml</string>
@@ -73,7 +81,7 @@
     <string id="notification_test_failed">Notification could not be shown. Check the app settings.</string>
     <string id="hydration_complication_long">HydraFuel Hydration</string>
     <string id="hydration_complication_short">HYDRA</string>
-    <string id="caffeine_complication_long">Caffeine Active</string>
+    <string id="caffeine_complication_long">Caffeine Today</string>
     <string id="caffeine_complication_short">CAFFEINE</string>
     <string id="hydration_complication_faceit">Hydration</string>
     <string id="stats_title">Daily Summary</string>

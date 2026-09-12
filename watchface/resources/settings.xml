@@ -48,6 +48,13 @@
             </settingConfig>
         </setting>
 
+        <setting propertyKey="@Properties.calorie_mode" title="@Strings.setting_calorie_mode">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.calorie_active</listEntry>
+                <listEntry value="1">@Strings.calorie_total</listEntry>
+            </settingConfig>
+        </setting>
+
         <setting propertyKey="@Properties.background_theme" title="@Strings.setting_background">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.theme_neon_purple</listEntry>

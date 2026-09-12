@@ -94,11 +94,10 @@ class DrinkCatalog {
             return false;
         }
 
-        HydrationStore.recordDrink(
+        return HydrationStore.recordDrink(
             drinkId,
             hydrationMl(drinkId) * servings,
             caffeineMg(drinkId) * servings,
             source);
-        return true;
     }
 }

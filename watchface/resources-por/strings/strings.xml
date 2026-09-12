@@ -18,6 +18,9 @@
     <string id="data_stress">Estresse</string>
     <string id="data_watch_battery">Bateria do relógio</string>
     <string id="data_calories">Calorias</string>
+    <string id="setting_calorie_mode">Tipo de calorias</string>
+    <string id="calorie_active">Ativas</string>
+    <string id="calorie_total">Totais</string>
     <string id="data_notifications">Notificações</string>
     <string id="data_temperature">Temperatura atual</string>
     <string id="theme_neon_purple">Roxo neon</string>

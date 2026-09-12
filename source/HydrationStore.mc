@@ -12,6 +12,11 @@ class HydrationStore {
     private static const DRINK_EVENTS_KEY = "drinkEventsV1";
     private static const DRINK_EVENT_STRIDE = 5;
     private static const MAX_DAILY_DRINK_EVENTS = 96;
+    private static const DRINK_REVISION_KEY = "drinkRevisionV1";
+    private static const DRINK_QUIET_BEFORE_KEY = "drinkQuietBeforeV1";
+    private static const DRINK_EVICTED_WATER_KEY = "drinkEvictedWaterV1";
+    private static const UNDO_JOURNAL_KEY = "drinkUndoJournalV1";
+    private static const UNDO_CALENDAR_KEY = "drinkUndoCalendarV1";
 
     static function dayKey() {
         var date = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
@@ -63,6 +68,16 @@ class HydrationStore {
     // Kept separate from the clock lookup so calendar correction behavior can
     // be verified deterministically in unit tests.
     static function ensureDay(today as String, todayOrdinal as Number) {
+        // Finish a committed drink change before archiving its original day.
+        var recoveredUndo = recoverPendingUndo();
+        var observedDay = numberOrNull(Storage.getValue(UNDO_CALENDAR_KEY));
+        if (observedDay != null && observedDay != todayOrdinal) {
+            Storage.setValue(DRINK_REVISION_KEY,
+                storedNumber(DRINK_REVISION_KEY) + 1);
+        }
+        if (observedDay == null || observedDay != todayOrdinal) {
+            Storage.setValue(UNDO_CALENDAR_KEY, todayOrdinal);
+        }
         var storedDay = Storage.getValue("day");
         var storedOrdinal = numberOrNull(Storage.getValue("dayOrdinal"));
 
@@ -82,6 +97,7 @@ class HydrationStore {
         if (!today.equals(storedDay) && storedOrdinal != null
                 && storedOrdinal > todayOrdinal) {
             pruneCaffeineEvents();
+            if (recoveredUndo) { HydrationComplicationPublisher.publishCurrent(); }
             return;
         }
 
@@ -108,8 +124,10 @@ class HydrationStore {
             Storage.setValue("lastCalories", 0);
             Storage.setValue("waterEventsV1", [] as Array<Number>);
             Storage.setValue(DRINK_EVENTS_KEY, [] as Array<Number>);
+            Storage.setValue(DRINK_QUIET_BEFORE_KEY, [] as Array<Number>);
+            Storage.setValue(DRINK_EVICTED_WATER_KEY, [] as Array<Number>);
             Storage.setValue("lastStress", 0);
-            Storage.setValue("lastBodyBattery", 0);
+            Storage.deleteValue("lastBodyBattery");
             Storage.setValue("lastSnapshotAt", 0);
             Storage.setValue("dailyTargetMl",
                 HydrationCalculator.baselineWaterMl(
@@ -135,6 +153,7 @@ class HydrationStore {
             }
         }
         pruneCaffeineEvents();
+        if (recoveredUndo) { HydrationComplicationPublisher.publishCurrent(); }
     }
 
     static function getNumber(key) {
@@ -174,17 +193,29 @@ class HydrationStore {
         var nowMoment = Time.now();
         ensureMoment(nowMoment);
         var nowValue = nowMoment.value();
+        var quietBefore = storedNumber("hydrationReminder.quietUntil");
+        var nextRevision = storedNumber(DRINK_REVISION_KEY) + 1;
+        var evictedWaterAt = 0;
+        var evictedWaterMl = 0;
+        var waterEvents = loadWaterEvents();
+        var caffeineEvents = loadCaffeineEvents();
+        var quietUntil = quietBefore;
 
         if (hydrationMl > 0) {
-            var waterEvents = trimPairEvents(loadWaterEvents());
+            var previousWater = waterEvents;
+            if (previousWater.size() >= 192) {
+                // Restore the last evicted pair on undo, keeping the newest
+                // 96 original rows even when migrating an oversized index.
+                evictedWaterAt = previousWater[previousWater.size() - 192];
+                evictedWaterMl = previousWater[previousWater.size() - 191];
+            }
+            waterEvents = trimPairEvents(previousWater);
             waterEvents.add(nowValue);
             waterEvents.add(hydrationMl);
-            Storage.setValue("waterEventsV1", waterEvents);
 
             var quietSeconds = quietPeriodSecondsForWater(hydrationMl);
-            if (quietSeconds > 0) {
-                Storage.setValue("hydrationReminder.quietUntil",
-                    nowValue + quietSeconds);
+            if (quietSeconds > 0 && nowValue + quietSeconds > quietBefore) {
+                quietUntil = nowValue + quietSeconds;
             }
         }
 
@@ -192,13 +223,15 @@ class HydrationStore {
             // ensureMoment() already pruned entries older than 48 hours. Do
             // not apply the 96-event reminder index cap here: every dose
             // still inside the decay window contributes to the estimate.
-            var caffeineEvents = loadCaffeineEvents();
             caffeineEvents.add(nowValue);
             caffeineEvents.add(caffeineMg);
-            Storage.setValue("caffeineEventsV2", caffeineEvents);
         }
 
         var drinkEvents = loadDrinkEvents();
+        var quietBeforeEvents = loadQuietBeforeEvents(
+            drinkEvents.size() / DRINK_EVENT_STRIDE);
+        var evictedWaterEvents = loadEvictedWaterEvents(
+            drinkEvents.size() / DRINK_EVENT_STRIDE);
         if (drinkEvents.size()
                 >= MAX_DAILY_DRINK_EVENTS * DRINK_EVENT_STRIDE) {
             var trimmedDrinks = [] as Array<Number>;
@@ -215,24 +248,274 @@ class HydrationStore {
                 }
             }
             drinkEvents = trimmedDrinks;
+            var trimmedQuiet = [] as Array<Number>;
+            for (var q = drinkStart / DRINK_EVENT_STRIDE;
+                    q < quietBeforeEvents.size(); q += 1) {
+                trimmedQuiet.add(quietBeforeEvents[q]);
+            }
+            quietBeforeEvents = trimmedQuiet;
+            var trimmedEvicted = [] as Array<Number>;
+            for (var p = (drinkStart / DRINK_EVENT_STRIDE) * 2;
+                    p < evictedWaterEvents.size(); p += 1) {
+                trimmedEvicted.add(evictedWaterEvents[p]);
+            }
+            evictedWaterEvents = trimmedEvicted;
         }
         drinkEvents.add(nowValue);
         drinkEvents.add(drinkId);
         drinkEvents.add(hydrationMl);
         drinkEvents.add(caffeineMg);
         drinkEvents.add(source);
-        Storage.setValue(DRINK_EVENTS_KEY, drinkEvents);
+        quietBeforeEvents.add(quietBefore);
+        evictedWaterEvents.add(evictedWaterAt);
+        evictedWaterEvents.add(evictedWaterMl);
+        var afterCaffeine = storedNumber("caffeineTodayMg") + caffeineMg;
+        return commitDrinkState({
+            "waterMl" => storedNumber("waterMl") + hydrationMl,
+            "caffeineTodayMg" => afterCaffeine,
+            "dailyTargetMl" => HydrationCalculator.adjustedWaterMl(
+                WellnessReader.weightKg(), storedNumber("lastCalories"),
+                storedNumber("lastStress"), storedBodyBattery(),
+                afterCaffeine).toNumber(),
+            "waterEventsV1" => waterEvents,
+            "caffeineEventsV2" => caffeineEvents,
+            DRINK_EVENTS_KEY => drinkEvents,
+            DRINK_QUIET_BEFORE_KEY => quietBeforeEvents,
+            DRINK_EVICTED_WATER_KEY => evictedWaterEvents,
+            "hydrationReminder.quietUntil" => quietUntil,
+            DRINK_REVISION_KEY => nextRevision
+        });
+    }
 
-        if (hydrationMl > 0) {
-            Storage.setValue("waterMl",
-                storedNumber("waterMl") + hydrationMl);
+    // Immutable confirmation identity: day, revision, then the five stored
+    // drink fields. Never identify an event by its timestamp alone.
+    static function lastDrinkForUndo() as Array<Number>? {
+        var now = Time.now();
+        ensureMoment(now);
+        var today = currentDayOrdinal();
+        if (storedNumber("dayOrdinal") != today
+                || !dayKey().equals(Storage.getValue("day"))) {
+            return null;
         }
-        if (caffeineMg > 0) {
-            Storage.setValue("caffeineTodayMg",
-                storedNumber("caffeineTodayMg") + caffeineMg);
+        var drinks = loadDrinkEvents();
+        if (drinks.size() < DRINK_EVENT_STRIDE) { return null; }
+        var last = drinks.size() - DRINK_EVENT_STRIDE;
+        var timestamp = drinks[last];
+        if (timestamp <= 0 || timestamp > now.value()) { return null; }
+        var date = Gregorian.info(new Time.Moment(timestamp), Time.FORMAT_SHORT);
+        if (dateOrdinal(date.year, date.month as Number, date.day) != today
+                || drinks[last + 2] < 0 || drinks[last + 3] < 0
+                || (drinks[last + 2] == 0 && drinks[last + 3] == 0)) {
+            return null;
         }
+        var snapshot = [today, storedNumber(DRINK_REVISION_KEY)]
+            as Array<Number>;
+        for (var i = 0; i < DRINK_EVENT_STRIDE; i += 1) {
+            snapshot.add(drinks[last + i]);
+        }
+        return snapshot;
+    }
+
+    static function undoLastDrink(snapshot as Array<Number>) as Boolean {
+        var current = lastDrinkForUndo();
+        if (current == null || snapshot.size() != current.size()) {
+            return false;
+        }
+        for (var i = 0; i < current.size(); i += 1) {
+            if (snapshot[i] != current[i]) { return false; }
+        }
+
+        var water = storedNumber("waterMl");
+        var caffeine = storedNumber("caffeineTodayMg");
+        if (water < snapshot[4] || caffeine < snapshot[5]) { return false; }
+        var waterEvents = loadWaterEvents();
+        var caffeineEvents = loadCaffeineEvents();
+        var waterIndex = snapshot[4] > 0
+            ? lastPairIndex(waterEvents, snapshot[2], snapshot[4]) : -1;
+        var caffeineIndex = snapshot[5] > 0
+            ? lastPairIndex(caffeineEvents, snapshot[2], snapshot[5]) : -1;
+        // Legacy events are reversible only when both indexes still identify
+        // the exact contributions; never guess or subtract unrelated doses.
+        if ((snapshot[4] > 0 && waterIndex < 0)
+                || (snapshot[5] > 0 && caffeineIndex < 0)) {
+            return false;
+        }
+        var remainingWater = withoutPair(waterEvents, waterIndex);
+        var remainingCaffeine = withoutPair(caffeineEvents, caffeineIndex);
+        var drinks = loadDrinkEvents();
+        var quietBefore = loadQuietBeforeEvents(
+            drinks.size() / DRINK_EVENT_STRIDE);
+        var evictedWater = loadEvictedWaterEvents(
+            drinks.size() / DRINK_EVENT_STRIDE);
+        var evictedIndex = evictedWater.size() - 2;
+        if (evictedWater[evictedIndex] > 0
+                && evictedWater[evictedIndex + 1] > 0) {
+            var restoredWater = [evictedWater[evictedIndex],
+                evictedWater[evictedIndex + 1]] as Array<Number>;
+            for (var r = 0; r < remainingWater.size(); r += 1) {
+                restoredWater.add(remainingWater[r]);
+            }
+            remainingWater = restoredWater;
+        }
+        var remainingDrinks = [] as Array<Number>;
+        for (var d = 0; d < drinks.size() - DRINK_EVENT_STRIDE; d += 1) {
+            remainingDrinks.add(drinks[d]);
+        }
+        var remainingQuiet = [] as Array<Number>;
+        for (var q = 0; q < quietBefore.size() - 1; q += 1) {
+            remainingQuiet.add(quietBefore[q]);
+        }
+        var remainingEvicted = [] as Array<Number>;
+        for (var p = 0; p < evictedIndex; p += 1) {
+            remainingEvicted.add(evictedWater[p]);
+        }
+        var restoredQuiet = quietBefore[quietBefore.size() - 1];
+        if (restoredQuiet < 0) { restoredQuiet = 0; }
+        // The saved predecessor preserves valid contributions beyond the
+        // 96-entry water index. Legacy rows fall back to retained water rows.
+        for (var w = 0; w + 1 < remainingWater.size(); w += 2) {
+            var duration = quietPeriodSecondsForWater(remainingWater[w + 1]);
+            var until = remainingWater[w] + duration;
+            if (duration > 0 && until > restoredQuiet) { restoredQuiet = until; }
+        }
+        var afterCaffeine = caffeine - snapshot[5];
+        var afterTarget = HydrationCalculator.adjustedWaterMl(
+            WellnessReader.weightKg(), storedNumber("lastCalories"),
+            storedNumber("lastStress"), storedBodyBattery(),
+            afterCaffeine).toNumber();
+        var after = {
+            "waterMl" => water - snapshot[4],
+            "caffeineTodayMg" => afterCaffeine,
+            "dailyTargetMl" => afterTarget,
+            "waterEventsV1" => remainingWater,
+            "caffeineEventsV2" => remainingCaffeine,
+            DRINK_EVENTS_KEY => remainingDrinks,
+            DRINK_QUIET_BEFORE_KEY => remainingQuiet,
+            DRINK_EVICTED_WATER_KEY => remainingEvicted,
+            "hydrationReminder.quietUntil" => restoredQuiet,
+            DRINK_REVISION_KEY => snapshot[1] + 1
+        };
+        return commitDrinkState(after);
+    }
+
+    private static function commitDrinkState(after as Dictionary) as Boolean {
+        // Commit intent first. All following writes use final absolute values,
+        // so a restart replays the same add/undo without splitting its totals
+        // from its dose indexes and undo metadata.
+        Storage.setValue(UNDO_JOURNAL_KEY, {
+            "day" => Storage.getValue("day"),
+            "dayOrdinal" => Storage.getValue("dayOrdinal"),
+            "after" => after
+        });
+        if (!recoverPendingUndo()) { return false; }
         HydrationComplicationPublisher.publishCurrent();
         return true;
+    }
+
+    private static function recoverPendingUndo() as Boolean {
+        var pending = Storage.getValue(UNDO_JOURNAL_KEY);
+        if (!(pending instanceof Lang.Dictionary)) { return false; }
+        var journal = pending as Dictionary;
+        var day = journal["day"];
+        var ordinal = numberOrNull(journal["dayOrdinal"]);
+        var state = journal["after"];
+        if (!(day instanceof Lang.String) || ordinal == null
+                || !(state instanceof Lang.Dictionary)
+                || !(day as String).equals(Storage.getValue("day"))
+                || ordinal != numberOrNull(Storage.getValue("dayOrdinal"))) {
+            Storage.deleteValue(UNDO_JOURNAL_KEY);
+            return false;
+        }
+        var after = state as Dictionary;
+        var numberKeys = ["waterMl", "caffeineTodayMg", "dailyTargetMl",
+            "hydrationReminder.quietUntil", DRINK_REVISION_KEY];
+        var arrayKeys = ["waterEventsV1", "caffeineEventsV2",
+            DRINK_EVENTS_KEY, DRINK_QUIET_BEFORE_KEY, DRINK_EVICTED_WATER_KEY];
+        for (var n = 0; n < numberKeys.size(); n += 1) {
+            if (numberOrNull(after[numberKeys[n]]) == null) {
+                Storage.deleteValue(UNDO_JOURNAL_KEY);
+                return false;
+            }
+        }
+        for (var a = 0; a < arrayKeys.size(); a += 1) {
+            if (!(after[arrayKeys[a]] instanceof Lang.Array)) {
+                Storage.deleteValue(UNDO_JOURNAL_KEY);
+                return false;
+            }
+        }
+        if (storedNumber(DRINK_REVISION_KEY) > after[DRINK_REVISION_KEY]) {
+            Storage.deleteValue(UNDO_JOURNAL_KEY);
+            return false;
+        }
+        for (var k = 0; k < numberKeys.size(); k += 1) {
+            Storage.setValue(numberKeys[k], after[numberKeys[k]]);
+        }
+        for (var e = 0; e < arrayKeys.size(); e += 1) {
+            Storage.setValue(arrayKeys[e], after[arrayKeys[e]]);
+        }
+        // Notification counters, celebration flags, and the phone command
+        // token are deliberately outside this transaction.
+        Storage.deleteValue(UNDO_JOURNAL_KEY);
+        return true;
+    }
+
+    private static function lastPairIndex(
+            events as Array<Number>, timestamp as Number,
+            dose as Number) as Number {
+        for (var i = events.size() - 2; i >= 0; i -= 2) {
+            if (events[i] == timestamp && events[i + 1] == dose) { return i; }
+        }
+        return -1;
+    }
+
+    private static function withoutPair(
+            events as Array<Number>, index as Number) as Array<Number> {
+        var result = [] as Array<Number>;
+        for (var i = 0; i + 1 < events.size(); i += 2) {
+            if (i == index) { continue; }
+            result.add(events[i]);
+            result.add(events[i + 1]);
+        }
+        return result;
+    }
+
+    private static function loadQuietBeforeEvents(count as Number)
+            as Array<Number> {
+        var saved = Storage.getValue(DRINK_QUIET_BEFORE_KEY);
+        var result = [] as Array<Number>;
+        for (var i = 0; i < count; i += 1) {
+            var value = -1;
+            if (saved instanceof Lang.Array && saved.size() == count) {
+                var number = numberOrNull(saved[i]);
+                if (number != null && number >= 0) { value = number; }
+            }
+            result.add(value);
+        }
+        return result;
+    }
+
+    private static function validBodyBattery(value) as Number? {
+        var number = numberOrNull(value);
+        return number != null && number >= 1 && number <= 100 ? number : null;
+    }
+
+    private static function loadEvictedWaterEvents(count as Number)
+            as Array<Number> {
+        var saved = Storage.getValue(DRINK_EVICTED_WATER_KEY);
+        var result = [] as Array<Number>;
+        for (var i = 0; i < count * 2; i += 1) {
+            var value = 0;
+            if (saved instanceof Lang.Array && saved.size() == count * 2) {
+                var number = numberOrNull(saved[i]);
+                if (number != null && number >= 0) { value = number; }
+            }
+            result.add(value);
+        }
+        return result;
+    }
+
+    private static function storedBodyBattery() as Number? {
+        return validBodyBattery(Storage.getValue("lastBodyBattery"));
     }
 
     static function caffeineRemaining(halfLifeHours) {
@@ -258,7 +541,7 @@ class HydrationStore {
             WellnessReader.weightKg(),
             storedNumber("lastCalories"),
             storedNumber("lastStress"),
-            storedNumber("lastBodyBattery"),
+            storedBodyBattery(),
             storedNumber("caffeineTodayMg")).toNumber();
         if (target > 0) {
             if (storedNumber("dailyTargetMl") != target) {
@@ -321,7 +604,8 @@ class HydrationStore {
     static function saveWellnessSnapshot(calories, stress, bodyBattery) {
         if (calories != null) { Storage.setValue("lastCalories", calories); }
         if (stress != null) { Storage.setValue("lastStress", stress); }
-        if (bodyBattery != null) { Storage.setValue("lastBodyBattery", bodyBattery); }
+        var battery = validBodyBattery(bodyBattery);
+        if (battery != null) { Storage.setValue("lastBodyBattery", battery); }
         // Calories influence the hydration target. If that critical read
         // fails, keep the old timestamp so the next temporal event retries.
         if (calories != null) {

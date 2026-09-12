@@ -20,6 +20,14 @@
     <string id="label_love_remind">amor,</string>
     <string id="label_forget_water">você está esquecendo de beber água</string>
     <string id="menu_title">Adicionar Bebida</string>
+    <string id="drink_register">Registrar</string>
+    <string id="drink_cancel">Cancelar</string>
+    <string id="drink_undo_last">Desfazer última bebida</string>
+    <string id="drink_today">Hoje</string>
+    <string id="drink_undo_confirm">Desfazer esta bebida</string>
+    <string id="drink_generic">Bebida</string>
+    <string id="drink_undo_unavailable">O lançamento mudou ou não está disponível. Reabra o menu.</string>
+    <string id="drink_save_failed">Não foi possível concluir. Confira seu total.</string>
     <string id="menu_water250">Água 250ml</string>
     <string id="menu_water250_sub">copo</string>
     <string id="menu_water500">Água 500ml</string>
@@ -73,7 +81,7 @@
     <string id="notification_test_failed">Não foi possível mostrar a notificação. Verifique as configurações.</string>
     <string id="hydration_complication_long">Hidratação HydraFuel</string>
     <string id="hydration_complication_short">HYDRA</string>
-    <string id="caffeine_complication_long">Cafeína ativa</string>
+    <string id="caffeine_complication_long">Cafeína do dia</string>
     <string id="caffeine_complication_short">CAFEÍNA</string>
     <string id="hydration_complication_faceit">Hidratação</string>
     <string id="stats_title">Resumo do Dia</string>

@@ -1,6 +1,7 @@
 import Toybox.Application;
 import Toybox.Application.Storage;
 import Toybox.Application.WatchFaceConfig;
+import Toybox.ActivityMonitor;
 import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -16,6 +17,8 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private const CAFFEINE_SHORT_LABEL = "CAFFEINE";
     private const WATER_COLOR = 0x0089CA;
     private const UNIT_COLOR = 0xD0D0D0;
+    private const CALORIES_ACTIVE = 0;
+    private const CALORIES_TOTAL = 1;
 
     // Reference layout, expressed in thousandths of the shortest screen side.
     // Keeping these anchors together prevents independent settings from moving
@@ -43,6 +46,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private var _theme as Number = FaceTheme.NEON_PURPLE;
     private var _accentColor as Number = 0x873FD1;
     private var _dataColor as Number = Graphics.COLOR_WHITE;
+    private var _calorieMode as Number = CALORIES_ACTIVE;
     private var _backgroundColor as Number = Graphics.COLOR_BLACK;
     private var _smokeTexture as BitmapResource;
     private var _timeFont as Graphics.VectorFont? = null;
@@ -91,6 +95,8 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
 
     function onShow() as Void {
         _isShown = true;
+        // Changes published while hidden are not delivered to our callback.
+        _dataDirty = true;
         subscribeToComplications();
         WatchUi.requestUpdate();
     }
@@ -132,6 +138,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         _theme = FaceFormatter.propertyNumber("background_theme", FaceTheme.NEON_PURPLE);
         _accentColor = FaceFormatter.propertyNumber("accent_color", 0x873FD1);
         _dataColor = FaceFormatter.propertyNumber("data_color", Graphics.COLOR_WHITE);
+        _calorieMode = FaceFormatter.propertyNumber("calorie_mode", CALORIES_ACTIVE);
 
         _topLeftId = new Complications.Id(FaceFormatter.propertyNumber(
             "left_data", Complications.COMPLICATION_TYPE_CALORIES) as Complications.Type);
@@ -208,6 +215,14 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         return isInsideSlot(x, y, FaceSlot.TOP_RIGHT);
     }
 
+    function isInsideHeartRate(x as Number, y as Number) as Boolean {
+        var size = screenSize();
+        var dx = x - screenCenterX();
+        var dy = y - layoutY(HEART_RATE_Y);
+        var radius = size * 115 / 1000;
+        return (dx * dx) + (dy * dy) <= radius * radius;
+    }
+
     function isInsideHydration(x as Number, y as Number) as Boolean {
         var circle = slotCircle(FaceSlot.BOTTOM_RIGHT);
         var dx = x - circle[0];
@@ -218,6 +233,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     function getTopLeftId() as Complications.Id { return _topLeftId; }
     function getBottomLeftId() as Complications.Id { return _bottomLeftId; }
     function getTopRightId() as Complications.Id { return _topRightId; }
+    function getHeartRateId() as Complications.Id { return _heartRateId; }
     function getHydrationId() as Complications.Id? { return _hydrationId; }
 
     function getSlotPreview(uniqueIdentifier as Number) as WatchUi.ComplicationDrawableRef? {
@@ -378,6 +394,15 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         try {
             var complication = Complications.getComplication(id);
             var type = id.getType();
+            if (type == Complications.COMPLICATION_TYPE_CALORIES
+                    && _calorieMode == CALORIES_TOTAL) {
+                try {
+                    var totalCalories = ActivityMonitor.getInfo().calories;
+                    if (totalCalories != null) {
+                        return totalCalories.format("%d");
+                    }
+                } catch (error) {}
+            }
             if (type == Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE) {
                 return FaceFormatter.temperatureText(
                     complication.value,

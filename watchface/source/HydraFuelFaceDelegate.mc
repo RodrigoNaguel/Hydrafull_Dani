@@ -62,6 +62,8 @@ class HydraFuelFaceDelegate extends WatchUi.WatchFaceDelegate {
             id = _view.getBottomLeftId();
         } else if (_view.isInsideTopRightSlot(coordinates[0], coordinates[1])) {
             id = _view.getTopRightId();
+        } else if (_view.isInsideHeartRate(coordinates[0], coordinates[1])) {
+            id = _view.getHeartRateId();
         } else if (_view.isInsideHydration(coordinates[0], coordinates[1])) {
             id = _view.getHydrationId();
         }

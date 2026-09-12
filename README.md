@@ -35,6 +35,9 @@ Documentação Garmin:
 ## Funcionalidades implementadas
 
 - Registro de água, eletrólitos, cafés, chás, suco e refrigerante zero.
+- Confirmação antes de registrar uma bebida no relógio, com volume e cafeína.
+- Desfazer o último lançamento de hoje, incluindo os feitos pelo celular,
+  corrigindo os totais, a cafeína restante e a pausa dos lembretes.
 - Monster Zero `473 ml / 142 mg` e Red Bull `250 ml / 80 mg`.
 - Cada lançamento do dia registra bebida, hidratação creditada, cafeína e
   origem; na virada, o histórico compacto preserva os totais e a meta do dia.
@@ -54,6 +57,19 @@ Documentação Garmin:
 Controles: deslize ou use `UP/DOWN` para alternar entre painel, resumo diário e
 relatório. No painel, toque ou use `START` para abrir as bebidas. No relatório,
 `START/SELECT` alterna entre `7D`, `4S` e `1A`.
+
+Ao escolher uma bebida, confira o resumo e selecione **Registrar**.
+**Cancelar** ou `BACK` retorna à lista sem gravar. A confirmação abre com
+Cancelar selecionado para evitar que um segundo toque em `START` registre por
+engano. Quando há bebidas no dia, **Desfazer última bebida** aparece no início
+da lista; confira o horário e escolha **Desfazer esta bebida**.
+
+O desfazer vale somente para o último lançamento do dia atual. Se outro
+lançamento chegar enquanto a confirmação estiver aberta, reabra o menu para
+selecionar a bebida correta. Lançamentos anteriores à virada do dia ficam nos
+totais do histórico e não podem ser removidos por esse comando. Uma operação
+do celular com várias porções é desfeita inteira. O token já sincronizado do
+celular continua consumido e não registra novamente a bebida desfeita.
 
 ### Registrar uma bebida pelo celular
 
@@ -239,9 +255,15 @@ O item **Diagnóstico** mostra:
 - `Today`, `Level` e `Quiet`: limite diário, severidade e pausa após água.
 
 Política atual: checagem leve a cada 15 minutos, snapshot de sensores a cada
-hora, pausa de 45 minutos apenas para registros de pelo menos 200 ml, faixas de
+hora, pausa de pelo menos 45 minutos para registros a partir de 200 ml
+(proporcional ao volume: 500 ml dão 90 minutos), faixas de
 déficit em 200/450/800 ml e no máximo dez lembretes por dia. A execução real
 continua sujeita ao agendamento do sistema do relógio.
+
+Adicionar outra bebida preserva uma pausa anterior mais longa. Ao desfazer,
+a pausa volta a considerar as bebidas restantes; notificações já enviadas e
+seus limites não são apagados. Body Battery indisponível não é interpretado
+como um valor baixo no cálculo da meta.
 
 As frases possuem um cursor persistente separado por nível. O app percorre
 todas as mensagens daquela faixa antes de reutilizar uma e continua a rotação

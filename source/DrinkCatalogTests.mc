@@ -75,6 +75,10 @@ function testPhoneDrinkToggleIsConsumedOnce(
     var oldWaterEvents = Storage.getValue("waterEventsV1");
     var oldCaffeineEvents = Storage.getValue("caffeineEventsV2");
     var oldDrinkEvents = Storage.getValue("drinkEventsV1");
+    var oldRevision = Storage.getValue("drinkRevisionV1");
+    var oldQuietBefore = Storage.getValue("drinkQuietBeforeV1");
+    var oldEvictedWater = Storage.getValue("drinkEvictedWaterV1");
+    var oldTarget = Storage.getValue("dailyTargetMl");
     var oldQuietUntil = Storage.getValue("hydrationReminder.quietUntil");
     var oldLastToken = Storage.getValue("phoneDrink.lastTokenV1");
     var oldProcessedAt = Storage.getValue("phoneDrink.lastProcessedAt");
@@ -94,6 +98,11 @@ function testPhoneDrinkToggleIsConsumedOnce(
     var second = PhoneDrinkBridge.processPending();
     var afterSecondWater = HydrationStore.getNumber("waterMl");
     var afterSecondCaffeine = HydrationStore.getNumber("caffeineTodayMg");
+    var snapshot = HydrationStore.lastDrinkForUndo();
+    var undone = snapshot != null && HydrationStore.undoLastDrink(snapshot);
+    var notReplayed = !PhoneDrinkBridge.processPending();
+    var undoKeptTotals = HydrationStore.getNumber("waterMl") == beforeWater
+        && HydrationStore.getNumber("caffeineTodayMg") == beforeCaffeine;
 
     Properties.setValue("phone_drink_id", oldDrinkId);
     Properties.setValue("phone_drink_servings", oldServings);
@@ -103,12 +112,16 @@ function testPhoneDrinkToggleIsConsumedOnce(
     restoreStorageValue("waterEventsV1", oldWaterEvents);
     restoreStorageValue("caffeineEventsV2", oldCaffeineEvents);
     restoreStorageValue("drinkEventsV1", oldDrinkEvents);
+    restoreStorageValue("drinkRevisionV1", oldRevision);
+    restoreStorageValue("drinkQuietBeforeV1", oldQuietBefore);
+    restoreStorageValue("drinkEvictedWaterV1", oldEvictedWater);
+    restoreStorageValue("dailyTargetMl", oldTarget);
     restoreStorageValue("hydrationReminder.quietUntil", oldQuietUntil);
     restoreStorageValue("phoneDrink.lastTokenV1", oldLastToken);
     restoreStorageValue("phoneDrink.lastProcessedAt", oldProcessedAt);
     restoreStorageValue("phoneDrink.lastResult", oldResult);
 
-    return first && !second
+    return first && !second && undone && notReplayed && undoKeptTotals
         && afterFirstWater == beforeWater + 473
         && afterFirstCaffeine == beforeCaffeine + 142
         && afterSecondWater == afterFirstWater
