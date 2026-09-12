@@ -61,13 +61,16 @@ monkeyc -f monkey.jungle -d fr165 \
   -y ~/.Garmin/ConnectIQ/Keys/developer_key.der -w
 ```
 
-## Known Issues to Address
-1. drawDataSlot() modification needs to be completed (displayValue handling)
-2. Caffeine icon drawing needs refinement
-3. DEBUG_LAYOUT visualization needs testing on actual device
+## Validation Status
+- `drawDataSlot()` uses the cached display value for the private caffeine
+  complication and keeps the configured metric path unchanged.
+- The caffeine icon, private complication discovery, and subscription path are
+  implemented together in `HydraFuelFaceView.mc`.
+- `DEBUG_LAYOUT` remains disabled in production and is ready for simulator or
+  device validation when the Connect IQ toolchain is available.
 
-## Next Steps
-1. Compile code and fix any type errors
-2. Run simulator to visually verify region layouts
-3. Test caffeine widget integration
-4. Verify no overlap or clipping in safe area
+## Remaining Validation
+1. Compile code and run the automated tests with the Connect IQ SDK.
+2. Run the simulator to visually verify region layouts.
+3. Verify caffeine widget integration and ensure there is no clipping in the
+   circular safe area.

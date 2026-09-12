@@ -114,6 +114,8 @@ class HydrationStore {
             Storage.setValue("hydrationReminder.lastReminderLevel", 0);
             Storage.setValue("hydrationReminder.remindersToday", 0);
             Storage.setValue("hydrationReminder.quietUntil", 0);
+            Storage.setValue("hydrationReminder.inactionCount", 0);
+            Storage.setValue("hydrationReminder.lastInactionAt", 0);
             Storage.setValue("hydrationReminder.goalCelebrationShown", false);
             Storage.setValue("hydrationReminder.lastNotificationAt", 0);
             Storage.setValue("hydrationReminder.lastNotificationReason", "-");
@@ -283,6 +285,10 @@ class HydrationStore {
             DRINK_QUIET_BEFORE_KEY => quietBeforeEvents,
             DRINK_EVICTED_WATER_KEY => evictedWaterEvents,
             "hydrationReminder.quietUntil" => quietUntil,
+            "hydrationReminder.inactionCount" => hydrationMl > 0 ? 0
+                : storedNumber("hydrationReminder.inactionCount"),
+            "hydrationReminder.lastInactionAt" => hydrationMl > 0 ? 0
+                : storedNumber("hydrationReminder.lastInactionAt"),
             DRINK_REVISION_KEY => nextRevision
         });
     }
@@ -393,6 +399,8 @@ class HydrationStore {
             DRINK_QUIET_BEFORE_KEY => remainingQuiet,
             DRINK_EVICTED_WATER_KEY => remainingEvicted,
             "hydrationReminder.quietUntil" => restoredQuiet,
+            "hydrationReminder.inactionCount" => 0,
+            "hydrationReminder.lastInactionAt" => 0,
             DRINK_REVISION_KEY => snapshot[1] + 1
         };
         return commitDrinkState(after);

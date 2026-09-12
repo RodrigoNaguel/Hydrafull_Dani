@@ -34,6 +34,10 @@ class AppConfig {
     static const REMINDER_REPEAT_LEVEL1_SEC = 60 * 60;
     static const REMINDER_REPEAT_LEVEL2_SEC = 45 * 60;
     static const REMINDER_REPEAT_LEVEL3_SEC = 30 * 60;
+    static const REMINDER_INACTION_MAX_COUNT = 3;
+    static const REMINDER_INACTION_LEVEL2_COUNT = 2;
+    static const REMINDER_INACTION_LEVEL3_COUNT = 3;
+    static const REMINDER_END_OF_DAY_MINUTES = 120;
     // Estimated sweat concentration is distinct from beverage concentration.
     static const DEFAULT_SWEAT_SODIUM_MG_PER_LITER = 920.0;
     static const DEFAULT_SWEAT_POTASSIUM_MG_PER_LITER = 156.0;

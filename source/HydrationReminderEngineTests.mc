@@ -38,6 +38,29 @@ function testReminderEscalationAndRepeatCooldowns(
 }
 
 (:test)
+function testInactionModulatesLevelWithoutReplacingDeficit(
+        logger as Test.Logger) as Boolean {
+    logger.debug("checking inaction level modulation");
+    return HydrationReminderEngine.reminderLevelForState(199, 3, 500) == 0
+        && HydrationReminderEngine.reminderLevelForState(200, 1, 500) == 1
+        && HydrationReminderEngine.reminderLevelForState(200, 2, 500) == 2
+        && HydrationReminderEngine.reminderLevelForState(450, 3, 180) == 3
+        && HydrationReminderEngine.reminderLevelForState(450, 3, 300) == 2;
+}
+
+(:test)
+function testAdaptiveCooldownRespondsToInactionAndDayEnd(
+        logger as Test.Logger) as Boolean {
+    logger.debug("checking adaptive reminder cooldown");
+    return HydrationReminderEngine.cooldownSecondsForState(2, 2, 0, 300)
+            == 45 * 60
+        && HydrationReminderEngine.cooldownSecondsForState(2, 1, 2, 300)
+            == 15 * 60
+        && HydrationReminderEngine.cooldownSecondsForState(3, 3, 0, 120)
+            == 15 * 60;
+}
+
+(:test)
 function testOnlyMeaningfulWaterStartsQuietPeriod(
         logger as Test.Logger) as Boolean {
     logger.debug("checking post-water quiet period");

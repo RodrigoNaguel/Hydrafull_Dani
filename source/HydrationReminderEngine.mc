@@ -45,6 +45,9 @@ class HydrationReminderEngine {
         var startMinutes = AppConfig.REMINDER_WINDOW_START_HOUR * 60;
         var endMinutes = AppConfig.REMINDER_WINDOW_END_HOUR * 60
             + AppConfig.REMINDER_WINDOW_END_MINUTE;
+        if (currentMinutes >= endMinutes) {
+            return "end-of-day";
+        }
 
         var expectedMl = HydrationReminderEngine.expectedProgressMlForMinutes(
             currentMinutes, targetMl);
@@ -86,12 +89,15 @@ class HydrationReminderEngine {
             return "on-track";
         }
 
-        var currentLevel = HydrationReminderEngine.reminderLevelForDeficit(deficitMl);
+        var inactionCount = HydrationReminderEngine.advanceInaction(nowValue);
+        var currentLevel = HydrationReminderEngine.reminderLevelForState(
+            deficitMl, inactionCount, remainingMinutes);
         if (currentLevel == 0) {
             return "on-track";
         }
 
-        if (!HydrationReminderEngine.canShowReminder(nowValue, currentLevel)) {
+        if (!HydrationReminderEngine.canShowReminder(
+            nowValue, currentLevel, inactionCount, remainingMinutes)) {
             return "cooldown-L" + currentLevel;
         }
 
@@ -120,6 +126,52 @@ class HydrationReminderEngine {
             return "sent-L" + currentLevel;
         }
         return "send-error";
+    }
+
+    static function reminderLevelForState(
+            deficitMl, inactionCount as Number,
+            minutesRemaining as Number) as Number {
+        var level = HydrationReminderEngine.reminderLevelForDeficit(deficitMl);
+        if (level < 2 && inactionCount >= AppConfig.REMINDER_INACTION_LEVEL2_COUNT
+                && deficitMl >= AppConfig.REMINDER_DEFICIT_LEVEL1_ML) {
+            level = 2;
+        }
+        if (level < 3 && inactionCount >= AppConfig.REMINDER_INACTION_LEVEL3_COUNT
+                && minutesRemaining <= AppConfig.REMINDER_END_OF_DAY_MINUTES
+                && deficitMl >= AppConfig.REMINDER_DEFICIT_LEVEL2_ML) {
+            level = 3;
+        }
+        return level;
+    }
+
+    static function inactionCount() as Number {
+        return HydrationReminderEngine.getNumberValue(
+            "hydrationReminder.inactionCount");
+    }
+
+    static function recordInaction() as Void {
+        var count = HydrationReminderEngine.inactionCount() + 1;
+        if (count > AppConfig.REMINDER_INACTION_MAX_COUNT) {
+            count = AppConfig.REMINDER_INACTION_MAX_COUNT;
+        }
+        Storage.setValue("hydrationReminder.inactionCount", count);
+    }
+
+    static function resetInaction() as Void {
+        Storage.setValue("hydrationReminder.inactionCount", 0);
+        Storage.setValue("hydrationReminder.lastInactionAt", 0);
+    }
+
+    static function advanceInaction(nowValue) as Number {
+        var lastAt = HydrationReminderEngine.getNumberValue(
+            "hydrationReminder.lastInactionAt");
+        if (lastAt > 0
+                && nowValue - lastAt < AppConfig.REMINDER_CHECK_INTERVAL_SEC) {
+            return HydrationReminderEngine.inactionCount();
+        }
+        HydrationReminderEngine.recordInaction();
+        Storage.setValue("hydrationReminder.lastInactionAt", nowValue);
+        return HydrationReminderEngine.inactionCount();
     }
 
     private static function showGoalCelebrationIfNeeded(nowValue) as String {
@@ -215,7 +267,9 @@ class HydrationReminderEngine {
         return local.hour * 60 + local.min;
     }
 
-    private static function canShowReminder(nowValue, currentLevel) {
+        private static function canShowReminder(
+            nowValue, currentLevel, inactionCount as Number,
+            minutesRemaining as Number) {
         var quietUntil = HydrationReminderEngine.getNumberValue("hydrationReminder.quietUntil");
         if (quietUntil > nowValue) {
             return false;
@@ -224,8 +278,8 @@ class HydrationReminderEngine {
         var lastReminderTime = HydrationReminderEngine.getNumberValue("hydrationReminder.lastReminderTime");
         var lastReminderLevel = HydrationReminderEngine.getNumberValue(
             "hydrationReminder.lastReminderLevel");
-        var cooldown = HydrationReminderEngine.cooldownSecondsForLevels(
-            currentLevel, lastReminderLevel);
+        var cooldown = HydrationReminderEngine.cooldownSecondsForState(
+            currentLevel, lastReminderLevel, inactionCount, minutesRemaining);
         return (nowValue - lastReminderTime) >= cooldown;
     }
 
@@ -241,6 +295,21 @@ class HydrationReminderEngine {
             return AppConfig.REMINDER_REPEAT_LEVEL2_SEC;
         }
         return AppConfig.REMINDER_REPEAT_LEVEL3_SEC;
+    }
+
+    static function cooldownSecondsForState(
+            currentLevel as Number, lastLevel as Number,
+            inactionCount as Number, minutesRemaining as Number) as Number {
+        var cooldown = HydrationReminderEngine.cooldownSecondsForLevels(
+            currentLevel, lastLevel);
+        if (currentLevel > lastLevel && inactionCount >= 2) {
+            cooldown = cooldown / 2;
+        }
+        if (minutesRemaining <= AppConfig.REMINDER_END_OF_DAY_MINUTES
+                && currentLevel >= 2) {
+            cooldown = cooldown / 2;
+        }
+        return cooldown;
     }
 
     // L1 messages are warm reminders (no volume shown — the pace gap is small).
