@@ -9,6 +9,7 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
+import Toybox.Weather;
 
 class HydraFuelFaceView extends WatchUi.WatchFace {
     private const HYDRATION_ID_KEY = "hydrafuel.complicationId";
@@ -17,6 +18,11 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private const CAFFEINE_SHORT_LABEL = "CAFFEINE";
     private const WATER_COLOR = 0x0089CA;
     private const UNIT_COLOR = 0xD0D0D0;
+    private const HOUR_OVERLAP_SHADOW = 0x3A303E;
+    private const HOUR_OVERLAP_SHADOW_OFFSET = 12;
+    private const HOUR_CENTER_X_OFFSET = -1;
+    private const GREEN_PREVIEW = true;
+    private const PREVIEW_GREEN = 0x00E65B;
     private const CALORIES_ACTIVE = 0;
     private const CALORIES_TOTAL = 1;
 
@@ -27,7 +33,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private const BATTERY_Y = 144;
     private const DATE_Y = 222;
     private const HOUR_Y = 411;
-    private const MINUTE_Y = 651;
+    private const MINUTE_Y = 654;
     private const TOP_ICON_Y = 303;
     private const TOP_VALUE_Y = 389;
     private const TOP_UNIT_Y = 449;
@@ -44,13 +50,15 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
 
     private var _style as Number = FaceStyle.BALANCED;
     private var _theme as Number = FaceTheme.NEON_PURPLE;
+    private var _palettePreset as Number = FacePalettePreset.CUSTOM;
+    private var _paletteColors as Array<Number> = [];
+    private var _paletteActive as Boolean = false;
     private var _accentColor as Number = 0x873FD1;
     private var _dataColor as Number = Graphics.COLOR_WHITE;
     private var _calorieMode as Number = CALORIES_ACTIVE;
     private var _backgroundColor as Number = Graphics.COLOR_BLACK;
     private var _smokeTexture as BitmapResource;
-    private var _timeFont as Graphics.VectorFont? = null;
-    private var _minuteFont as Graphics.VectorFont? = null;
+    private var _clockDigits as Array<BitmapResource> = [];
     private var _headerFont as Graphics.VectorFont? = null;
     private var _dateFont as Graphics.VectorFont? = null;
     private var _valueFont as Graphics.VectorFont? = null;
@@ -81,6 +89,18 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         _topRightId = new Complications.Id(Complications.COMPLICATION_TYPE_BODY_BATTERY);
         _heartRateId = new Complications.Id(Complications.COMPLICATION_TYPE_HEART_RATE);
         _smokeTexture = WatchUi.loadResource(Rez.Drawables.SmokeTextureNeonPurple) as BitmapResource;
+        _clockDigits = [
+            WatchUi.loadResource(Rez.Drawables.ClockDigit0) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit1) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit2) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit3) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit4) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit5) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit6) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit7) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit8) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockDigit9) as BitmapResource
+        ];
         _hydrationId = null;
         _caffeineId = null;
     }
@@ -138,6 +158,8 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         _theme = FaceFormatter.propertyNumber("background_theme", FaceTheme.NEON_PURPLE);
         _accentColor = FaceFormatter.propertyNumber("accent_color", 0x873FD1);
         _dataColor = FaceFormatter.propertyNumber("data_color", Graphics.COLOR_WHITE);
+        _palettePreset = FaceFormatter.propertyNumber(
+            "combined_palette", FacePalettePreset.CUSTOM);
         _calorieMode = FaceFormatter.propertyNumber("calorie_mode", CALORIES_ACTIVE);
 
         _topLeftId = new Complications.Id(FaceFormatter.propertyNumber(
@@ -250,7 +272,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         else if (uniqueIdentifier == FaceSlot.TOP_RIGHT) { value = _topRightValue; }
 
         var bounds = slotBounds(uniqueIdentifier);
-        var drawable = new SlotPreviewDrawable(bounds, value, _dataColor);
+        var drawable = new SlotPreviewDrawable(bounds, value, textDisplayColor());
         return new WatchUi.ComplicationDrawableRef({
             :drawable => drawable,
             :boundingBox => bounds
@@ -434,8 +456,6 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     }
 
     private function loadResponsiveFonts() as Void {
-        _timeFont = null;
-        _minuteFont = null;
         _headerFont = null;
         _dateFont = null;
         _valueFont = null;
@@ -446,21 +466,12 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
             // The first faces match the reference on current devices. The
             // remaining native faces keep the same visual hierarchy on models
             // such as Venu 3S, which expose a smaller vector-font set.
-            var boldFaces = ["RobotoCondensedBold", "NanumGothicBold"];
             var headerFaces = ["YantramanavRegular", "RobotoRegular",
                 "PridiRegular"];
             var valueFaces = ["RobotoRegular", "YantramanavRegular",
                 "PridiRegular"];
             var unitFaces = ["YantramanavRegular", "RobotoRegular",
                 "PridiRegular"];
-            _timeFont = Graphics.getVectorFont({
-                :face => boldFaces,
-                :size => screenSize() * 392 / 1000
-            });
-            _minuteFont = Graphics.getVectorFont({
-                :face => boldFaces,
-                :size => screenSize() * 378 / 1000
-            });
             _headerFont = Graphics.getVectorFont({
                 :face => headerFaces,
                 :size => screenSize() * 96 / 1000
@@ -509,96 +520,68 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
 
     private function drawTimeCenter(dc as Dc, centerX as Number, centerY as Number, size as Number) as Void {
         var clock = System.getClockTime();
-        var hour = clock.hour;
-        if (!System.getDeviceSettings().is24Hour) {
-            hour = hour % 12;
-            if (hour == 0) { hour = 12; }
-        }
-
-        var hourText = "" + hour.format("%02d"); 
-        var minuteText = "" + clock.min.format("%02d");
-        var hourFont = selectTimeFont();
-        var minuteFont = selectMinuteFont();
+        var hourText = FaceFormatter.hourText(
+            clock.hour, System.getDeviceSettings().is24Hour);
+        var minuteText = FaceFormatter.minuteText(clock.min);
         var hourY = layoutY(HOUR_Y);
         var minuteY = layoutY(MINUTE_Y);
 
-        // Paint the minute line first so the white hour stays visually in
-        // front at the narrow overlap, as in the reference image.
-        if (_accentColor == 0x873FD1) {
-            drawReferenceMinuteText(dc, centerX + 1, minuteY, minuteFont,
-                minuteText, size);
-        } else {
-            drawCleanMinuteText(dc, centerX + 1, minuteY, minuteFont,
-                minuteText, _accentColor, size);
+        drawClockPair(dc, centerX, minuteY, minuteText,
+            size, accentDisplayColor());
+        drawClockPair(dc, centerX + HOUR_CENTER_X_OFFSET,
+            hourY + size * HOUR_OVERLAP_SHADOW_OFFSET / 1000,
+            hourText, size, HOUR_OVERLAP_SHADOW);
+        drawClockPair(dc, centerX + HOUR_CENTER_X_OFFSET, hourY, hourText,
+            size, timeDisplayColor());
+    }
+
+    private function drawClockPair(dc as Dc, x as Number, y as Number,
+            text as String, size as Number, color as Number) as Void {
+        var firstDigit = clockDigitIndex(
+            text.substring(0, 1) as String);
+        var secondDigit = clockDigitIndex(
+            text.substring(1, 2) as String);
+        var firstBitmap = _clockDigits[firstDigit];
+        var secondBitmap = _clockDigits[secondDigit];
+        var targetHeight = size * 260 / 1000;
+        var firstScale = targetHeight.toFloat()
+            / firstBitmap.getHeight().toFloat();
+        var secondScale = targetHeight.toFloat()
+            / secondBitmap.getHeight().toFloat();
+        var firstWidth = firstBitmap.getWidth().toFloat() * firstScale;
+        var secondWidth = secondBitmap.getWidth().toFloat() * secondScale;
+        var gap = size * 8 / 1000;
+        var pairWidth = firstWidth + secondWidth + gap;
+        var firstCenterX = x - pairWidth / 2 + firstWidth / 2;
+        var secondCenterX = firstCenterX + firstWidth / 2 + gap
+            + secondWidth / 2;
+
+        drawClockGlyph(dc, firstBitmap, firstCenterX, y, firstScale, color);
+        drawClockGlyph(dc, secondBitmap, secondCenterX, y, secondScale, color);
+    }
+
+    private function clockDigitIndex(digit as String) as Number {
+        var index = "0123456789".find(digit);
+        if (index == null) {
+            throw new Lang.InvalidValueException(
+                "Clock digit must be a decimal digit");
         }
-        drawCleanTimeText(dc, centerX - 1, hourY, hourFont,
-            hourText, Graphics.COLOR_WHITE);
+        return index as Number;
     }
 
-    private function drawReferenceMinuteText(dc as Dc, x as Number,
-            y as Number, font as Graphics.FontType, text as String,
-            size as Number) as Void {
-        var justify = Graphics.TEXT_JUSTIFY_CENTER
-            | Graphics.TEXT_JUSTIFY_VCENTER;
-        var tightening = size * 12 / 1000;
-        var first = text.substring(0, 1) as String;
-        var second = text.substring(1, 2) as String;
-        var firstWidth = dc.getTextWidthInPixels(first, font);
-        var secondWidth = dc.getTextWidthInPixels(second, font);
-        var pairWidth = firstWidth + secondWidth - tightening;
-        var firstX = x - pairWidth / 2 + firstWidth / 2;
-        var secondX = x + pairWidth / 2 - secondWidth / 2;
-        // Three-pixel interpolation of samples taken from the reference. Every
-        // band reuses the same glyph origins, so the outline remains natural.
-        var gradientColors = [
-            0x4C2570, 0x4E2772, 0x502873, 0x532977,
-            0x55297B, 0x5E2D89, 0x673197, 0x6D34A1,
-            0x7337AB, 0x7639B0, 0x783AB4, 0x783AB5,
-            0x783AB5, 0x773AB5, 0x7639B5, 0x7639B5,
-            0x7538B5, 0x7538B5, 0x7437B5, 0x7337B5,
-            0x7236B4, 0x7236B4, 0x7135B4, 0x7135B4,
-            0x7035B3, 0x7035B3, 0x6F35B2, 0x6F35B2,
-            0x6F34B1, 0x6F34B1, 0x6F34B0, 0x6F34B0
-        ];
-        var gradientTop = y - size * 120 / 1000;
-        var bandHeight = size * 8 / 1000;
-        if (bandHeight < 1) { bandHeight = 1; }
-        for (var i = 0; i < gradientColors.size(); i += 1) {
-            dc.setClip(0, gradientTop + bandHeight * i,
-                _width, bandHeight + 1);
-            dc.setColor(gradientColors[i], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(firstX, y, font, first, justify);
-            dc.drawText(secondX, y, font, second, justify);
-        }
-        dc.clearClip();
-    }
-
-    private function drawCleanMinuteText(dc as Dc, x as Number,
-            y as Number, font as Graphics.FontType, text as String,
-            color as Number, size as Number) as Void {
-        var tightening = size * 12 / 1000;
-        var justify = Graphics.TEXT_JUSTIFY_CENTER
-            | Graphics.TEXT_JUSTIFY_VCENTER;
-        var first = text.substring(0, 1) as String;
-        var second = text.substring(1, 2) as String;
-        var firstWidth = dc.getTextWidthInPixels(first, font);
-        var secondWidth = dc.getTextWidthInPixels(second, font);
-        var pairWidth = firstWidth + secondWidth - tightening;
-        var firstX = x - pairWidth / 2 + firstWidth / 2;
-        var secondX = x + pairWidth / 2 - secondWidth / 2;
-
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(firstX, y, font, first, justify);
-        dc.drawText(secondX, y, font, second, justify);
-    }
-
-    private function drawCleanTimeText(dc as Dc, x as Number, y as Number,
-            font as Graphics.FontType, text as String,
+    private function drawClockGlyph(dc as Dc, bitmap as BitmapResource,
+            centerX as Float, centerY as Number, scale as Float,
             color as Number) as Void {
-        var justify = Graphics.TEXT_JUSTIFY_CENTER
-            | Graphics.TEXT_JUSTIFY_VCENTER;
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, y, font, text, justify);
+        var width = bitmap.getWidth().toFloat() * scale;
+        var height = bitmap.getHeight().toFloat() * scale;
+        var transform = new Graphics.AffineTransform();
+        transform.scale(scale, scale);
+        dc.drawBitmap2(centerX - width / 2, centerY - height / 2,
+            bitmap, {
+                :tintColor => color,
+                :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                :transform => transform
+            });
     }
 
     private function drawHeartRate(dc as Dc, centerX as Number,
@@ -611,8 +594,8 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         var groupWidth = iconSize * 2 + gap + textWidth;
         var startX = centerX - groupWidth / 2;
 
-        drawHeart(dc, startX + iconSize, y, iconSize, _accentColor);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        drawHeart(dc, startX + iconSize, y, iconSize, accentDisplayColor());
+        dc.setColor(timeDisplayColor(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(startX + iconSize * 2 + gap, y, font,
             _heartRateValue,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -626,9 +609,9 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         var unitY = layout[3];
         var iconSize = (size * 42 / 1000).toNumber();
 
-        drawDrop(dc, x - 1, iconY, iconSize, WATER_COLOR);
+        drawDrop(dc, x - 1, iconY, iconSize, waterIconColor());
 
-        dc.setColor(_dataColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(textDisplayColor(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, valueY, valueFont(),
             FaceFormatter.wholeNumberText(_waterMl),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -660,7 +643,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         var date = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         var dateText = date.day_of_week.toString()
             + " " + date.day.format("%02d");
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(timeDisplayColor(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, dateY, dateFace, dateText,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
@@ -682,7 +665,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         var terminalWidth = iconHeight / 4;
         if (terminalWidth < 2) { terminalWidth = 2; }
 
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(timeDisplayColor(), Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
         dc.drawRectangle(iconX, iconY, iconWidth, iconHeight);
         dc.fillRectangle(iconX + iconWidth + 1,
@@ -696,18 +679,6 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
 
         dc.drawText(iconX + iconWidth + gap, centerY, font, text,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-
-    private function selectTimeFont() as Graphics.FontType {
-        var font = _timeFont;
-        if (font != null) { return font; }
-        return Graphics.FONT_NUMBER_HOT;
-    }
-
-    private function selectMinuteFont() as Graphics.FontType {
-        var font = _minuteFont;
-        if (font != null) { return font; }
-        return selectTimeFont();
     }
 
     private function headerFont() as Graphics.FontType {
@@ -749,16 +720,17 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         var iconSize = (screenSize() * 42 / 1000).toNumber();
 
         var isCaffeine = _caffeineId != null && id.equals(_caffeineId);
+        var iconColor = metricIconColor();
         if (isCaffeine) {
-            drawCaffeine(dc, x, iconY, iconSize, _dataColor);
+            drawCaffeine(dc, x, iconY, iconSize, iconColor);
         } else if (hasCustomMetricIcon(id.getType())) {
-            drawMetricIcon(dc, id.getType(), x, iconY, iconSize, _dataColor);
+            drawMetricIcon(dc, id.getType(), x, iconY, iconSize, iconColor);
         } else {
-            drawOfficialComplicationIcon(dc, id, x, iconY, iconSize, _dataColor);
+            drawOfficialComplicationIcon(dc, id, x, iconY, iconSize, iconColor);
         }
 
         var displayValue = isCaffeine ? _caffeineValue : value;
-        dc.setColor(_dataColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(textDisplayColor(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, valueY, valueFont(), displayValue,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
@@ -771,7 +743,29 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     }
 
     private function unitDisplayColor() as Number {
+        if (_paletteActive) { return textDisplayColor(); }
         return _dataColor == Graphics.COLOR_WHITE ? UNIT_COLOR : _dataColor;
+    }
+
+    private function textDisplayColor() as Number {
+        return _paletteActive ? _paletteColors[4] : _dataColor;
+    }
+
+    private function timeDisplayColor() as Number {
+        return _paletteActive ? _paletteColors[4] : Graphics.COLOR_WHITE;
+    }
+
+    private function accentDisplayColor() as Number {
+        if (GREEN_PREVIEW) { return PREVIEW_GREEN; }
+        return _paletteActive ? _paletteColors[3] : _accentColor;
+    }
+
+    private function metricIconColor() as Number {
+        return _paletteActive ? _paletteColors[2] : _dataColor;
+    }
+
+    private function waterIconColor() as Number {
+        return _paletteActive ? _paletteColors[2] : WATER_COLOR;
     }
 
     private function hasCustomMetricIcon(type as Complications.Type) as Boolean {
@@ -961,9 +955,93 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     }
 
     private function drawWeatherIcon(dc as Dc, x as Number, y as Number, size as Number, color as Number) as Void {
-        // The reference uses one clean cloud glyph. The temperature value still
-        // comes from the selected current-temperature complication.
-        drawCloud(dc, x + 2, y + 1, size * 165 / 100, color);
+        var glyph = FaceWeatherGlyph.CLOUD;
+        try {
+            if (Weather has :getCurrentConditions) {
+                var conditions = Weather.getCurrentConditions();
+                if (conditions != null) {
+                    glyph = FaceFormatter.weatherGlyph(conditions.condition);
+                }
+            }
+        } catch (error) {}
+
+        if (glyph == FaceWeatherGlyph.SUN) {
+            drawSun(dc, x, y, size, color);
+        } else if (glyph == FaceWeatherGlyph.PARTLY_CLOUDY) {
+            drawSun(dc, x - size * 22 / 100, y - size * 22 / 100,
+                size * 82 / 100, color);
+            drawCloud(dc, x + 2, y + 1, size * 145 / 100, color);
+        } else if (glyph == FaceWeatherGlyph.RAIN) {
+            drawCloud(dc, x + 2, y - 1, size * 155 / 100, color);
+            drawRainDrops(dc, x, y, size, color);
+        } else if (glyph == FaceWeatherGlyph.SNOW) {
+            drawCloud(dc, x + 2, y - 1, size * 155 / 100, color);
+            drawSnowflakes(dc, x, y, size, color);
+        } else {
+            drawCloud(dc, x + 2, y + 1, size * 165 / 100, color);
+        }
+    }
+
+    private function drawSun(dc as Dc, x as Number, y as Number,
+            size as Number, color as Number) as Void {
+        var ray = size * 47 / 100;
+        var inner = size * 34 / 100;
+        var radius = size * 25 / 100;
+        var penWidth = size * 10 / 100;
+        if (penWidth < 1) { penWidth = 1; }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(penWidth);
+        dc.drawLine(x - ray, y, x - inner, y);
+        dc.drawLine(x + inner, y, x + ray, y);
+        dc.drawLine(x, y - ray, x, y - inner);
+        dc.drawLine(x, y + inner, x, y + ray);
+        dc.drawLine(x - ray * 7 / 10, y - ray * 7 / 10,
+            x - inner * 7 / 10, y - inner * 7 / 10);
+        dc.drawLine(x + inner * 7 / 10, y + inner * 7 / 10,
+            x + ray * 7 / 10, y + ray * 7 / 10);
+        dc.drawLine(x + inner * 7 / 10, y - inner * 7 / 10,
+            x + ray * 7 / 10, y - ray * 7 / 10);
+        dc.drawLine(x - ray * 7 / 10, y + ray * 7 / 10,
+            x - inner * 7 / 10, y + inner * 7 / 10);
+        dc.setPenWidth(1);
+        dc.fillCircle(x, y, radius);
+    }
+
+    private function drawRainDrops(dc as Dc, x as Number, y as Number,
+            size as Number, color as Number) as Void {
+        var dropY = y + size * 58 / 100;
+        var dropLength = size * 28 / 100;
+        var penWidth = size * 12 / 100;
+        if (penWidth < 1) { penWidth = 1; }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(penWidth);
+        dc.drawLine(x - size * 28 / 100, dropY,
+            x - size * 38 / 100, dropY + dropLength);
+        dc.drawLine(x, dropY, x - size * 10 / 100,
+            dropY + dropLength);
+        dc.drawLine(x + size * 28 / 100, dropY,
+            x + size * 18 / 100, dropY + dropLength);
+        dc.setPenWidth(1);
+    }
+
+    private function drawSnowflakes(dc as Dc, x as Number, y as Number,
+            size as Number, color as Number) as Void {
+        drawSnowflake(dc, x - size * 26 / 100,
+            y + size * 67 / 100, size * 20 / 100, color);
+        drawSnowflake(dc, x + size * 18 / 100,
+            y + size * 72 / 100, size * 20 / 100, color);
+    }
+
+    private function drawSnowflake(dc as Dc, x as Number, y as Number,
+            radius as Number, color as Number) as Void {
+        if (radius < 1) { radius = 1; }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(x - radius, y, x + radius, y);
+        dc.drawLine(x, y - radius, x, y + radius);
+        dc.drawLine(x - radius * 7 / 10, y - radius * 7 / 10,
+            x + radius * 7 / 10, y + radius * 7 / 10);
+        dc.drawLine(x - radius * 7 / 10, y + radius * 7 / 10,
+            x + radius * 7 / 10, y - radius * 7 / 10);
     }
 
     private function drawCloud(dc as Dc, x as Number, y as Number, size as Number, color as Number) as Void {
@@ -1089,6 +1167,17 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     }
 
     private function resolvePalette() as Void {
+        if (GREEN_PREVIEW) {
+            _paletteColors = [];
+            _paletteActive = false;
+            _smokeTexture = WatchUi.loadResource(
+                Rez.Drawables.SmokeTextureGreen) as BitmapResource;
+            return;
+        }
+
+        // Presets only replace drawing colors; stored Custom settings stay intact.
+        _paletteColors = FaceFormatter.paletteColors(_palettePreset);
+        _paletteActive = _paletteColors.size() == 6;
         _backgroundColor = Graphics.COLOR_BLACK;
 
         if (_theme == FaceTheme.DEEP_PURPLE) {

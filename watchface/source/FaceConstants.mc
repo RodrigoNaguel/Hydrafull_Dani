@@ -15,6 +15,21 @@ module FaceTheme {
     const RED = 7;
 }
 
+module FacePalettePreset {
+    const CUSTOM = 0;
+    const GREEN = 1;
+    const BROWN = 2;
+    const PURPLE = 3;
+}
+
+module FaceWeatherGlyph {
+    const SUN = 0;
+    const PARTLY_CLOUDY = 1;
+    const CLOUD = 2;
+    const RAIN = 3;
+    const SNOW = 4;
+}
+
 module FaceSlot {
     const TOP_LEFT = 1;
     // Keep native editor identifiers compatible with the original slots:

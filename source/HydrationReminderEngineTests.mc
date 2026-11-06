@@ -44,8 +44,8 @@ function testInactionModulatesLevelWithoutReplacingDeficit(
     return HydrationReminderEngine.reminderLevelForState(199, 3, 500) == 0
         && HydrationReminderEngine.reminderLevelForState(200, 1, 500) == 1
         && HydrationReminderEngine.reminderLevelForState(200, 2, 500) == 2
-        && HydrationReminderEngine.reminderLevelForState(450, 3, 180) == 3
-        && HydrationReminderEngine.reminderLevelForState(450, 3, 300) == 2;
+        && HydrationReminderEngine.reminderLevelForState(450, 3, 120) == 3
+        && HydrationReminderEngine.reminderLevelForState(450, 3, 121) == 2;
 }
 
 (:test)

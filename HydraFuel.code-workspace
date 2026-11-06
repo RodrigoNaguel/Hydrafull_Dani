@@ -1,0 +1,12 @@
+{
+    "folders": [
+        {
+            "path": ".",
+            "name": "HydraFuel"
+        },
+        {
+            "path": "watchface",
+            "name": "HydraFuelFace"
+        }
+    ]
+}

@@ -6,6 +6,7 @@
             "request": "launch",
             "name": "Run HydraFuel Face",
             "stopAtLaunch": false,
+            "settingsJson": "${workspaceFolder}/bin/HydraFuelFace-settings.json",
             "device": "${command:GetTargetDevice}"
         },
         {
@@ -20,6 +21,7 @@
             "request": "launch",
             "name": "Run With HydraFuel",
             "stopAtLaunch": false,
+            "settingsJson": "${workspaceFolder}/bin/HydraFuelFace-settings.json",
             "complicationSubscriberFolder": "${workspaceFolder}",
             "complicationPublisherFolder": "${workspaceFolder}/..",
             "device": "${command:GetTargetDevice}"

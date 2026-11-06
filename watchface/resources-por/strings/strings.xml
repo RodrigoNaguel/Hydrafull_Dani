@@ -8,6 +8,11 @@
     <string id="setting_center_data">Dado central</string>
     <string id="setting_right_data">Dado direito</string>
     <string id="setting_background">Tema do fundo</string>
+    <string id="setting_palette">Paleta combinada</string>
+    <string id="palette_custom">Personalizada</string>
+    <string id="palette_green">Verde floresta</string>
+    <string id="palette_brown">Marrom quente</string>
+    <string id="palette_purple">Roxo suave</string>
     <string id="setting_accent">Cor da hora e coração</string>
     <string id="setting_data_color">Cor dos widgets</string>
     <string id="data_heart_rate">Batimentos</string>

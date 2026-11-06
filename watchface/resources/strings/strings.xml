@@ -8,6 +8,11 @@
     <string id="setting_center_data">Middle data</string>
     <string id="setting_right_data">Right data</string>
     <string id="setting_background">Background theme</string>
+    <string id="setting_palette">Combined palette</string>
+    <string id="palette_custom">Custom</string>
+    <string id="palette_green">Forest green</string>
+    <string id="palette_brown">Warm brown</string>
+    <string id="palette_purple">Muted purple</string>
     <string id="setting_accent">Time &amp; heart color</string>
     <string id="setting_data_color">Widget color</string>
     <string id="data_heart_rate">Heart rate</string>

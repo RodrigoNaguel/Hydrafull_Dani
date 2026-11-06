@@ -1,5 +1,25 @@
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.svg"/>
+    <bitmap id="ClockDigit0" filename="clock_digit_refined_0.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit1" filename="clock_digit_refined_1.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit2" filename="clock_digit_refined_2.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit3" filename="clock_digit_refined_3.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit4" filename="clock_digit_refined_4.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit5" filename="clock_digit_refined_5.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit6" filename="clock_digit_refined_6.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit7" filename="clock_digit_refined_7.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit8" filename="clock_digit_refined_8.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockDigit9" filename="clock_digit_refined_9.png"
+            automaticPalette="false" compress="true"/>
 
     <bitmap id="SmokeTextureNeonPurple" filename="reference_glow_neon_purple.png"
             automaticPalette="true" dithering="floyd_steinberg"

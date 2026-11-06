@@ -68,6 +68,15 @@
             </settingConfig>
         </setting>
 
+        <setting propertyKey="@Properties.combined_palette" title="@Strings.setting_palette">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.palette_custom</listEntry>
+                <listEntry value="1">@Strings.palette_green</listEntry>
+                <listEntry value="2">@Strings.palette_brown</listEntry>
+                <listEntry value="3">@Strings.palette_purple</listEntry>
+            </settingConfig>
+        </setting>
+
         <setting propertyKey="@Properties.accent_color" title="@Strings.setting_accent">
             <settingConfig type="list">
                 <listEntry value="8863697">@Strings.color_violet</listEntry>

@@ -34,9 +34,14 @@ No diretório `watchface`:
 
 ```bash
 monkeyc -f monkey.jungle -d fr165 \
-  -o bin/HydraFuelFace-fr165.prg \
+  -o bin/HydraFuelFace.prg \
   -y ~/.Garmin/ConnectIQ/Keys/developer_key.der -w
 ```
+
+O build gera `bin/HydraFuelFace-settings.json`, que deve ficar ao lado de
+`HydraFuelFace.prg`. No VS Code, abra `../HydraFuel.code-workspace` e execute
+**Run HydraFuel Face**. No Simulator, use **File > Edit Persistent Storage >
+Edit Application.Properties data** e escolha **HydraFuel Face**.
 
 Para testar a ponte no VS Code, use a configuração **Run Complication Apps** e
 selecione a pasta raiz como publisher e `watchface` como subscriber.

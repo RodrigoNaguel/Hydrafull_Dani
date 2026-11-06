@@ -239,6 +239,23 @@ Para testar no relógio físico, use `Monkey C: Build for Device` e gere um
 `.prg` separado para o modelo exato. Para a loja, use
 `Monkey C: Export Project` e envie o arquivo `.iq`.
 
+### Testar propriedades no simulador
+
+Abra `HydraFuel.code-workspace` no VS Code. Ele mantém os dois projetos no
+workspace com os nomes que o Simulator usa para associar os arquivos de
+configuração: `HydraFuel` para o app e `HydraFuelFace` para a watchface.
+Feche a execução antiga do Simulator, execute **Run App** para o app ou **Run
+HydraFuel Face** para a watchface e então abra **File > Edit Persistent
+Storage > Edit Application.Properties data** no Simulator para selecionar o
+app correspondente.
+
+A extensão gera o `.prg` e o `-settings.json` usando o nome do projeto no
+workspace. O workspace fornecido gera `bin/HydraFuel.prg` e
+`bin/HydraFuel-settings.json` para o app e
+`watchface/bin/HydraFuelFace.prg` e
+`watchface/bin/HydraFuelFace-settings.json` para a watchface. Esses nomes
+correspondem aos apps exibidos pelo Simulator.
+
 ### Testar lembretes no relógio
 
 Depois de instalar uma nova versão, abra o HydraFuel uma vez. Isso registra ou

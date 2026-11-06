@@ -11,12 +11,14 @@
             "request": "launch",
             "name": "Run App",
             "stopAtLaunch": false,
+            "settingsJson": "${workspaceFolder}/bin/HydraFuel-settings.json",
             "device": "${command:GetTargetDevice}"
         },
         {
             "type": "monkeyc",
             "request": "launch",
             "name": "Run Tests",
+            "presentation": { "hidden": true },
             "runTests": true,
             "device": "${command:GetTargetDevice}"
         },
@@ -24,6 +26,7 @@
             "type": "monkeyc",
             "request": "launch",
             "name": "Run Complication Apps",
+            "presentation": { "hidden": true },
             "stopAtLaunch": false,
             "complicationSubscriberFolder": "${command:GetComplicationSubscriberFolder}",
             "complicationPublisherFolder": "${command:GetComplicationPublisherFolder}",
@@ -33,6 +36,7 @@
             "type": "monkeyc",
             "request": "launch",
             "name": "Run Native Pairing",
+            "presentation": { "hidden": true },
             "runNativePairing": true,
             "stopAtLaunch": false,
             "device": "${command:GetTargetDevice}"
