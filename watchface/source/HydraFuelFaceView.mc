@@ -18,11 +18,6 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private const CAFFEINE_SHORT_LABEL = "CAFFEINE";
     private const WATER_COLOR = 0x0089CA;
     private const UNIT_COLOR = 0xD0D0D0;
-    private const HOUR_OVERLAP_SHADOW = 0x3A303E;
-    private const HOUR_OVERLAP_SHADOW_OFFSET = 12;
-    private const HOUR_OVERLAP_SHADOW_X_OFFSET = 1;
-    private const HOUR_OVERLAP_SHADOW_CLIP_TOP = 6;
-    private const HOUR_OVERLAP_SHADOW_CLIP_HEIGHT = 8;
     private const HOUR_CENTER_X_OFFSET = -2;
     private const GREEN_PREVIEW = true;
     private const PREVIEW_GREEN = 0x00E65B;
@@ -530,30 +525,41 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         var minuteY = layoutY(MINUTE_Y);
 
         var hourX = centerX + HOUR_CENTER_X_OFFSET;
+        var minuteColor = accentDisplayColor();
         drawClockPair(dc, centerX, minuteY, minuteText,
-            size, accentDisplayColor());
+            size, minuteColor);
+        drawMinuteTopShade(dc, centerX, minuteY, minuteText, size,
+            minuteColor);
+        drawClockPair(dc, hourX, hourY, hourText,
+            size, timeDisplayColor());
+    }
 
-        if (dc has :setClip) {
-            // Cast the hour shadow into a narrow strip at the top of the
-            // minutes, then redraw the hour face above it for a clean overlap.
-            var shadowClipY = minuteY - size * 260 / 2000
-                + size * HOUR_OVERLAP_SHADOW_CLIP_TOP / 1000;
-            var shadowClipHeight = size * HOUR_OVERLAP_SHADOW_CLIP_HEIGHT
-                / 1000;
-            dc.setClip(0, shadowClipY, _width, shadowClipHeight);
-            drawClockPair(dc, hourX + HOUR_OVERLAP_SHADOW_X_OFFSET,
-                hourY + size * HOUR_OVERLAP_SHADOW_OFFSET / 1000,
-                hourText, size, HOUR_OVERLAP_SHADOW);
-            dc.setClip(0, 0, _width, _height);
-            drawClockPair(dc, hourX, hourY, hourText,
-                size, timeDisplayColor());
-        } else {
-            drawClockPair(dc, hourX,
-                hourY + size * HOUR_OVERLAP_SHADOW_OFFSET / 1000,
-                hourText, size, HOUR_OVERLAP_SHADOW);
-            drawClockPair(dc, hourX, hourY, hourText,
-                size, timeDisplayColor());
+    private function drawMinuteTopShade(dc as Dc, centerX as Number,
+            minuteY as Number, minuteText as String, size as Number,
+            minuteColor as Number) as Void {
+        if (!(dc has :setClip)) { return; }
+
+        var top = minuteY - size * 260 / 2000;
+        var bandCount = (size * 30 / 1000).toNumber();
+        if (bandCount < 6) { bandCount = 6; }
+
+        for (var i = 0; i < bandCount; i += 1) {
+            var strength = 52 + (i * 42 / (bandCount - 1)).toNumber();
+            dc.setClip(0, top + i, _width, 1);
+            drawClockPair(dc, centerX, minuteY, minuteText, size,
+                shadeColor(minuteColor, strength));
         }
+        dc.setClip(0, 0, _width, _height);
+    }
+
+    private function shadeColor(color as Number, strength as Number) as Number {
+        var red = (color >> 16) & 0xFF;
+        var green = (color >> 8) & 0xFF;
+        var blue = color & 0xFF;
+        var shadedRed = (red * strength / 100).toNumber();
+        var shadedGreen = (green * strength / 100).toNumber();
+        var shadedBlue = (blue * strength / 100).toNumber();
+        return (shadedRed << 16) | (shadedGreen << 8) | shadedBlue;
     }
 
     private function drawClockPair(dc as Dc, x as Number, y as Number,
