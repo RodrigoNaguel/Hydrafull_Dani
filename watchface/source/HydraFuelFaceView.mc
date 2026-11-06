@@ -19,7 +19,10 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private const WATER_COLOR = 0x0089CA;
     private const UNIT_COLOR = 0xD0D0D0;
     private const HOUR_OVERLAP_SHADOW = 0x3A303E;
-    private const HOUR_OVERLAP_SHADOW_OFFSET = 18;
+    private const HOUR_OVERLAP_SHADOW_OFFSET = 12;
+    private const HOUR_OVERLAP_SHADOW_X_OFFSET = 1;
+    private const HOUR_OVERLAP_SHADOW_CLIP_TOP = 6;
+    private const HOUR_OVERLAP_SHADOW_CLIP_HEIGHT = 8;
     private const HOUR_CENTER_X_OFFSET = -2;
     private const GREEN_PREVIEW = true;
     private const PREVIEW_GREEN = 0x00E65B;
@@ -531,18 +534,19 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
             size, accentDisplayColor());
 
         if (dc has :setClip) {
-            drawClockPair(dc, hourX, hourY, hourText,
-                size, timeDisplayColor());
-
-            // Restrict the final shadow pass to the area below the hour glyphs.
-            // This lets it land on the minute tops without darkening the hours.
-            var shadowClipY = hourY + size * 260 / 2000;
-            var shadowClipHeight = size * 10 / 1000;
+            // Cast the hour shadow into a narrow strip at the top of the
+            // minutes, then redraw the hour face above it for a clean overlap.
+            var shadowClipY = minuteY - size * 260 / 2000
+                + size * HOUR_OVERLAP_SHADOW_CLIP_TOP / 1000;
+            var shadowClipHeight = size * HOUR_OVERLAP_SHADOW_CLIP_HEIGHT
+                / 1000;
             dc.setClip(0, shadowClipY, _width, shadowClipHeight);
-            drawClockPair(dc, hourX,
+            drawClockPair(dc, hourX + HOUR_OVERLAP_SHADOW_X_OFFSET,
                 hourY + size * HOUR_OVERLAP_SHADOW_OFFSET / 1000,
                 hourText, size, HOUR_OVERLAP_SHADOW);
             dc.setClip(0, 0, _width, _height);
+            drawClockPair(dc, hourX, hourY, hourText,
+                size, timeDisplayColor());
         } else {
             drawClockPair(dc, hourX,
                 hourY + size * HOUR_OVERLAP_SHADOW_OFFSET / 1000,
