@@ -19,6 +19,9 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private const WATER_COLOR = 0x0089CA;
     private const UNIT_COLOR = 0xD0D0D0;
     private const HOUR_CENTER_X_OFFSET = -2;
+    // Soft shadow mask offset, in thousandths of the screen size.
+    private const HOUR_SHADOW_X_OFFSET = 2;
+    private const HOUR_SHADOW_Y_OFFSET = 18;
     private const GREEN_PREVIEW = true;
     private const PREVIEW_GREEN = 0x00E65B;
     private const CALORIES_ACTIVE = 0;
@@ -57,6 +60,7 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
     private var _backgroundColor as Number = Graphics.COLOR_BLACK;
     private var _smokeTexture as BitmapResource;
     private var _clockDigits as Array<BitmapResource> = [];
+    private var _clockShadowDigits as Array<BitmapResource> = [];
     private var _headerFont as Graphics.VectorFont? = null;
     private var _dateFont as Graphics.VectorFont? = null;
     private var _valueFont as Graphics.VectorFont? = null;
@@ -98,6 +102,18 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
             WatchUi.loadResource(Rez.Drawables.ClockDigit7) as BitmapResource,
             WatchUi.loadResource(Rez.Drawables.ClockDigit8) as BitmapResource,
             WatchUi.loadResource(Rez.Drawables.ClockDigit9) as BitmapResource
+        ];
+        _clockShadowDigits = [
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit0) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit1) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit2) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit3) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit4) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit5) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit6) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit7) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit8) as BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.ClockShadowDigit9) as BitmapResource
         ];
         _hydrationId = null;
         _caffeineId = null;
@@ -528,48 +544,44 @@ class HydraFuelFaceView extends WatchUi.WatchFace {
         var minuteColor = accentDisplayColor();
         drawClockPair(dc, centerX, minuteY, minuteText,
             size, minuteColor);
-        drawMinuteTopShade(dc, centerX, minuteY, minuteText, size,
-            minuteColor);
+        if (dc has :setClip) {
+            var shadowX = hourX + size * HOUR_SHADOW_X_OFFSET / 1000;
+            var shadowY = hourY + size * HOUR_SHADOW_Y_OFFSET / 1000;
+            var minuteTop = minuteY - size * 260 / 2000;
+            var shadowBottom = shadowY + size * 260 / 2000;
+            var overlapHeight = shadowBottom - minuteTop;
+            if (overlapHeight > 0) {
+                // Keep the soft hour shadow on the minute tops only.
+                dc.setClip(0, minuteTop, _width, overlapHeight);
+                drawClockShadowPair(dc, shadowX, shadowY, hourText, size,
+                    Graphics.COLOR_BLACK);
+                dc.setClip(0, 0, _width, _height);
+            }
+        }
         drawClockPair(dc, hourX, hourY, hourText,
             size, timeDisplayColor());
     }
 
-    private function drawMinuteTopShade(dc as Dc, centerX as Number,
-            minuteY as Number, minuteText as String, size as Number,
-            minuteColor as Number) as Void {
-        if (!(dc has :setClip)) { return; }
-
-        var top = minuteY - size * 260 / 2000;
-        var bandCount = (size * 30 / 1000).toNumber();
-        if (bandCount < 6) { bandCount = 6; }
-
-        for (var i = 0; i < bandCount; i += 1) {
-            var strength = 52 + (i * 42 / (bandCount - 1)).toNumber();
-            dc.setClip(0, top + i, _width, 1);
-            drawClockPair(dc, centerX, minuteY, minuteText, size,
-                shadeColor(minuteColor, strength));
-        }
-        dc.setClip(0, 0, _width, _height);
-    }
-
-    private function shadeColor(color as Number, strength as Number) as Number {
-        var red = (color >> 16) & 0xFF;
-        var green = (color >> 8) & 0xFF;
-        var blue = color & 0xFF;
-        var shadedRed = (red * strength / 100).toNumber();
-        var shadedGreen = (green * strength / 100).toNumber();
-        var shadedBlue = (blue * strength / 100).toNumber();
-        return (shadedRed << 16) | (shadedGreen << 8) | shadedBlue;
-    }
-
     private function drawClockPair(dc as Dc, x as Number, y as Number,
             text as String, size as Number, color as Number) as Void {
+        drawClockPairFromDigits(dc, x, y, text, size, color, _clockDigits);
+    }
+
+    private function drawClockShadowPair(dc as Dc, x as Number, y as Number,
+            text as String, size as Number, color as Number) as Void {
+        drawClockPairFromDigits(dc, x, y, text, size, color,
+            _clockShadowDigits);
+    }
+
+    private function drawClockPairFromDigits(dc as Dc, x as Number,
+            y as Number, text as String, size as Number, color as Number,
+            digits as Array<BitmapResource>) as Void {
         var firstDigit = clockDigitIndex(
             text.substring(0, 1) as String);
         var secondDigit = clockDigitIndex(
             text.substring(1, 2) as String);
-        var firstBitmap = _clockDigits[firstDigit];
-        var secondBitmap = _clockDigits[secondDigit];
+        var firstBitmap = digits[firstDigit];
+        var secondBitmap = digits[secondDigit];
         var targetHeight = size * 260 / 1000;
         var firstScale = targetHeight.toFloat()
             / firstBitmap.getHeight().toFloat();

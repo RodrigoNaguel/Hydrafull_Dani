@@ -21,6 +21,27 @@
     <bitmap id="ClockDigit9" filename="clock_digit_refined_9.png"
             automaticPalette="false" compress="true"/>
 
+    <bitmap id="ClockShadowDigit0" filename="clock_shadow_digit_0.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit1" filename="clock_shadow_digit_1.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit2" filename="clock_shadow_digit_2.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit3" filename="clock_shadow_digit_3.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit4" filename="clock_shadow_digit_4.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit5" filename="clock_shadow_digit_5.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit6" filename="clock_shadow_digit_6.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit7" filename="clock_shadow_digit_7.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit8" filename="clock_shadow_digit_8.png"
+            automaticPalette="false" compress="true"/>
+    <bitmap id="ClockShadowDigit9" filename="clock_shadow_digit_9.png"
+            automaticPalette="false" compress="true"/>
+
     <bitmap id="SmokeTextureNeonPurple" filename="reference_glow_neon_purple.png"
             automaticPalette="true" dithering="floyd_steinberg"
             scaleX="100%" scaleY="100%" scaleRelativeTo="screen"
